@@ -98,6 +98,14 @@
       border-radius: 12px;
       padding: 14px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      cursor: pointer;
+      border: 2px solid transparent;
+      transition: border-color 0.15s, background 0.15s;
+    }
+    .card-summary:active { background: var(--bg); }
+    .card-summary.selected {
+      border-color: var(--primary);
+      background: #eff6ff;
     }
     .card-summary .name {
       font-size: 12.5px;
@@ -345,8 +353,11 @@
       </form>
     </section>
 
-    <section class="panel">
-      <h2>지출 내역</h2>
+    <section class="panel" id="expensePanel">
+      <h2 style="display:flex;align-items:center;justify-content:space-between;">
+        <span>지출 내역</span>
+        <span id="filterClear" style="display:none;font-size:12.5px;color:var(--primary);cursor:pointer;font-weight:500;">전체보기 ✕</span>
+      </h2>
       <div id="expenseListWrap">
         <div class="empty-state">불러오는 중...</div>
       </div>
@@ -369,6 +380,7 @@
 
   <script>
     var state = null;
+    var selectedCardId = null;
 
     function fmtWon(n) {
       return Math.round(n).toLocaleString('ko-KR') + '원';
@@ -424,14 +436,11 @@
       document.getElementById('periodLabel').textContent = state.periodLabel;
       document.getElementById('grandTotal').textContent = fmtWon(state.grandTotal);
 
-      var grid = document.getElementById('cardSummaryGrid');
-      grid.innerHTML = '';
-      state.cards.forEach(function (c) {
-        var el = document.createElement('div');
-        el.className = 'card-summary';
-        el.innerHTML = '<div class="name">' + escapeHtml(c.name) + '</div><div class="amount">' + fmtWon(state.totalsByCard[c.id] || 0) + '</div>';
-        grid.appendChild(el);
-      });
+      if (selectedCardId && !state.cards.some(function (c) { return c.id === selectedCardId; })) {
+        selectedCardId = null;
+      }
+
+      renderCardSummaryGrid();
 
       var select = document.getElementById('cardSelect');
       var prevValue = select.value;
@@ -450,12 +459,34 @@
       renderCardManageList();
     }
 
+    function renderCardSummaryGrid() {
+      var grid = document.getElementById('cardSummaryGrid');
+      grid.innerHTML = '';
+      state.cards.forEach(function (c) {
+        var el = document.createElement('div');
+        el.className = 'card-summary' + (c.id === selectedCardId ? ' selected' : '');
+        el.innerHTML = '<div class="name">' + escapeHtml(c.name) + '</div><div class="amount">' + fmtWon(state.totalsByCard[c.id] || 0) + '</div>';
+        el.addEventListener('click', function () {
+          selectedCardId = (selectedCardId === c.id) ? null : c.id;
+          renderCardSummaryGrid();
+          renderExpenseList();
+          if (selectedCardId) {
+            document.getElementById('expensePanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+        grid.appendChild(el);
+      });
+    }
+
     function renderExpenseList() {
       var wrap = document.getElementById('expenseListWrap');
-      if (!state.expenses.length) {
-        wrap.innerHTML = '<div class="empty-state">이번 정산월에 등록된 내역이 없습니다.</div>';
-        return;
-      }
+      var filterClear = document.getElementById('filterClear');
+      filterClear.style.display = selectedCardId ? 'inline' : 'none';
+
+      var cardsToShow = selectedCardId
+        ? state.cards.filter(function (c) { return c.id === selectedCardId; })
+        : state.cards;
+
       var byCard = {};
       state.cards.forEach(function (c) { byCard[c.id] = []; });
       state.expenses.forEach(function (e) {
@@ -463,8 +494,16 @@
         byCard[e.cardId].push(e);
       });
 
+      var hasAny = cardsToShow.some(function (c) { return (byCard[c.id] || []).length > 0; });
+      if (!hasAny) {
+        wrap.innerHTML = '<div class="empty-state">' +
+          (selectedCardId ? '이 카드의 이번 정산월 내역이 없습니다.' : '이번 정산월에 등록된 내역이 없습니다.') +
+          '</div>';
+        return;
+      }
+
       var html = '';
-      state.cards.forEach(function (c) {
+      cardsToShow.forEach(function (c) {
         var items = byCard[c.id] || [];
         if (!items.length) return;
         html += '<div class="expense-group">';
@@ -534,6 +573,12 @@
       div.textContent = str == null ? '' : String(str);
       return div.innerHTML;
     }
+
+    document.getElementById('filterClear').addEventListener('click', function () {
+      selectedCardId = null;
+      renderCardSummaryGrid();
+      renderExpenseList();
+    });
 
     document.getElementById('prevBtn').addEventListener('click', function () {
       loadMonth(state.prevKey);
