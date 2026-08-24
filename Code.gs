@@ -142,9 +142,12 @@ function getMonthData(billingKey) {
   var s = ensureSheets_();
   if (!billingKey) billingKey = getBillingKey_(new Date());
   var range = getBillingRange_(billingKey);
+  var prevKey = shiftBillingKey_(billingKey, -1);
+  var prevRange = getBillingRange_(prevKey);
   var cards = getCards();
   var rows = s.expSheet.getDataRange().getValues();
   var expenses = [];
+  var prevGrandTotal = 0;
   var tz = Session.getScriptTimeZone();
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
@@ -160,6 +163,8 @@ function getMonthData(billingKey) {
         amount: Number(row[4]),
         category: row[5] || '기타'
       });
+    } else if (d >= prevRange.start && d <= prevRange.end) {
+      prevGrandTotal += Number(row[4]);
     }
   }
   expenses.sort(function (a, b) { return a.dateISO < b.dateISO ? -1 : (a.dateISO > b.dateISO ? 1 : 0); });
@@ -184,7 +189,8 @@ function getMonthData(billingKey) {
     totalsByCard: totalsByCard,
     totalsByCategory: totalsByCategory,
     grandTotal: grandTotal,
-    prevKey: shiftBillingKey_(billingKey, -1),
+    prevGrandTotal: prevGrandTotal,
+    prevKey: prevKey,
     nextKey: shiftBillingKey_(billingKey, 1)
   };
 }
