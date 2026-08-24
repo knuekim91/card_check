@@ -130,6 +130,64 @@
       font-size: 15px;
       margin: 0 0 12px 0;
     }
+    .category-chart-wrap {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+    .donut {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      position: relative;
+    }
+    .donut::after {
+      content: '';
+      position: absolute;
+      inset: 17px;
+      border-radius: 50%;
+      background: var(--card-bg);
+    }
+    .category-legend {
+      flex: 1;
+      min-width: 180px;
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+    .category-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+    }
+    .category-legend-item .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .category-legend-item .cat-name {
+      flex: 1;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .category-legend-item .cat-amount {
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+    }
+    .category-legend-item .cat-pct {
+      color: var(--text-sub);
+      font-size: 11.5px;
+      width: 32px;
+      text-align: right;
+      flex-shrink: 0;
+    }
     .form-row {
       display: flex;
       flex-direction: column;
@@ -172,6 +230,22 @@
     }
     button.primary:active { background: var(--primary-dark); }
     button.primary:disabled { opacity: 0.6; }
+    .form-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+    }
+    .form-actions button.primary { margin-top: 0; flex: 1; }
+    button.secondary {
+      background: var(--bg);
+      color: var(--text-sub);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+    button.secondary:active { background: var(--border); }
     .expense-group {
       margin-bottom: 14px;
     }
@@ -199,6 +273,12 @@
       border-bottom: 1px dashed var(--border);
     }
     .expense-item:last-child { border-bottom: none; }
+    .expense-item .cat-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
     .expense-item .date {
       font-size: 12.5px;
       color: var(--text-sub);
@@ -217,6 +297,7 @@
       font-weight: 700;
       flex-shrink: 0;
     }
+    .expense-item .edit-btn,
     .expense-item .del-btn {
       background: none;
       border: none;
@@ -226,6 +307,7 @@
       padding: 4px 6px;
       flex-shrink: 0;
     }
+    .expense-item .edit-btn:active { color: var(--primary); }
     .expense-item .del-btn:active { color: var(--danger); }
     .empty-state {
       text-align: center;
@@ -329,7 +411,14 @@
     <div class="card-summary-grid" id="cardSummaryGrid"></div>
 
     <section class="panel">
-      <h2>지출 내역 입력</h2>
+      <h2>카테고리별 지출</h2>
+      <div id="categoryChartWrap">
+        <div class="empty-state">불러오는 중...</div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2 id="expenseFormTitle">지출 내역 입력</h2>
       <form id="expenseForm" class="form-row">
         <div>
           <label for="cardSelect">카드 선택</label>
@@ -346,10 +435,17 @@
           </div>
         </div>
         <div>
+          <label for="categorySelect">카테고리</label>
+          <select id="categorySelect" required></select>
+        </div>
+        <div>
           <label for="itemInput">항목</label>
           <input type="text" id="itemInput" placeholder="예: 이마트 장보기" required>
         </div>
-        <button type="submit" class="primary" id="submitBtn">추가하기</button>
+        <div class="form-actions">
+          <button type="submit" class="primary" id="submitBtn">추가하기</button>
+          <button type="button" class="secondary" id="cancelEditBtn" style="display:none;">취소</button>
+        </div>
       </form>
     </section>
 
@@ -381,6 +477,14 @@
   <script>
     var state = null;
     var selectedCardId = null;
+    var editingId = null;
+    var CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#ea580c', '#64748b'];
+
+    function categoryColor(cat) {
+      var idx = (state && state.categories) ? state.categories.indexOf(cat) : -1;
+      if (idx === -1) idx = 0;
+      return CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+    }
 
     function fmtWon(n) {
       return Math.round(n).toLocaleString('ko-KR') + '원';
@@ -409,7 +513,9 @@
           state = data;
           render();
           setLoading(false);
-          document.getElementById('dateInput').value = defaultDateForKey(data.billingKey);
+          if (!editingId) {
+            document.getElementById('dateInput').value = defaultDateForKey(data.billingKey);
+          }
         })
         .withFailureHandler(function (err) {
           setLoading(false);
@@ -441,6 +547,7 @@
       }
 
       renderCardSummaryGrid();
+      renderCategoryChart();
 
       var select = document.getElementById('cardSelect');
       var prevValue = select.value;
@@ -455,8 +562,60 @@
         select.value = prevValue;
       }
 
+      var catSelect = document.getElementById('categorySelect');
+      var prevCat = catSelect.value;
+      catSelect.innerHTML = '';
+      (state.categories || []).forEach(function (cat) {
+        var opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        catSelect.appendChild(opt);
+      });
+      if (prevCat && state.categories.indexOf(prevCat) !== -1) {
+        catSelect.value = prevCat;
+      }
+
       renderExpenseList();
       renderCardManageList();
+    }
+
+    function renderCategoryChart() {
+      var wrap = document.getElementById('categoryChartWrap');
+      var cats = state.categories || [];
+      var entries = cats.map(function (cat, idx) {
+        return { cat: cat, amount: state.totalsByCategory[cat] || 0, color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] };
+      }).filter(function (e) { return e.amount > 0; })
+        .sort(function (a, b) { return b.amount - a.amount; });
+
+      var total = entries.reduce(function (sum, e) { return sum + e.amount; }, 0);
+      if (!total) {
+        wrap.innerHTML = '<div class="empty-state">이번 정산월에 등록된 내역이 없습니다.</div>';
+        return;
+      }
+
+      var gradientParts = [];
+      var cursor = 0;
+      entries.forEach(function (e) {
+        var pct = e.amount / total * 100;
+        gradientParts.push(e.color + ' ' + cursor.toFixed(2) + '% ' + (cursor + pct).toFixed(2) + '%');
+        cursor += pct;
+      });
+
+      var legendHtml = entries.map(function (e) {
+        var pct = Math.round(e.amount / total * 100);
+        return '<div class="category-legend-item">' +
+          '<span class="dot" style="background:' + e.color + '"></span>' +
+          '<span class="cat-name">' + escapeHtml(e.cat) + '</span>' +
+          '<span class="cat-amount">' + fmtWon(e.amount) + '</span>' +
+          '<span class="cat-pct">' + pct + '%</span>' +
+          '</div>';
+      }).join('');
+
+      wrap.innerHTML =
+        '<div class="category-chart-wrap">' +
+          '<div class="donut" style="background:conic-gradient(' + gradientParts.join(', ') + ')"></div>' +
+          '<div class="category-legend">' + legendHtml + '</div>' +
+        '</div>';
     }
 
     function renderCardSummaryGrid() {
@@ -511,15 +670,25 @@
         html += '<div class="expense-list">';
         items.forEach(function (e) {
           html += '<div class="expense-item">' +
+            '<span class="cat-dot" style="background:' + categoryColor(e.category) + '" title="' + escapeHtml(e.category || '기타') + '"></span>' +
             '<span class="date">' + e.dateLabel + '</span>' +
             '<span class="item">' + escapeHtml(e.item) + '</span>' +
             '<span class="amount">' + fmtWon(e.amount) + '</span>' +
+            '<button class="edit-btn" data-id="' + e.id + '" aria-label="수정">✎</button>' +
             '<button class="del-btn" data-id="' + e.id + '" aria-label="삭제">✕</button>' +
             '</div>';
         });
         html += '</div></div>';
       });
       wrap.innerHTML = html;
+
+      wrap.querySelectorAll('.edit-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          var exp = state.expenses.find(function (e) { return e.id === id; });
+          if (exp) enterEditMode(exp);
+        });
+      });
 
       wrap.querySelectorAll('.del-btn').forEach(function (btn) {
         btn.addEventListener('click', function () {
@@ -528,6 +697,7 @@
           setLoading(true);
           google.script.run
             .withSuccessHandler(function () {
+              if (editingId === id) exitEditMode();
               loadMonth(state.billingKey);
             })
             .withFailureHandler(function (err) {
@@ -537,6 +707,28 @@
             .deleteExpense(id);
         });
       });
+    }
+
+    function enterEditMode(exp) {
+      editingId = exp.id;
+      document.getElementById('cardSelect').value = exp.cardId;
+      document.getElementById('dateInput').value = exp.dateISO;
+      document.getElementById('categorySelect').value = exp.category || '기타';
+      document.getElementById('itemInput').value = exp.item;
+      document.getElementById('amountInput').value = exp.amount;
+      document.getElementById('submitBtn').textContent = '수정 완료';
+      document.getElementById('cancelEditBtn').style.display = 'inline-block';
+      document.getElementById('expenseFormTitle').textContent = '지출 내역 수정';
+      document.getElementById('expenseForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function exitEditMode() {
+      editingId = null;
+      document.getElementById('itemInput').value = '';
+      document.getElementById('amountInput').value = '';
+      document.getElementById('submitBtn').textContent = '추가하기';
+      document.getElementById('cancelEditBtn').style.display = 'none';
+      document.getElementById('expenseFormTitle').textContent = '지출 내역 입력';
     }
 
     function renderCardManageList() {
@@ -581,35 +773,49 @@
     });
 
     document.getElementById('prevBtn').addEventListener('click', function () {
+      exitEditMode();
       loadMonth(state.prevKey);
     });
     document.getElementById('nextBtn').addEventListener('click', function () {
+      exitEditMode();
       loadMonth(state.nextKey);
+    });
+
+    document.getElementById('cancelEditBtn').addEventListener('click', function () {
+      exitEditMode();
     });
 
     document.getElementById('expenseForm').addEventListener('submit', function (ev) {
       ev.preventDefault();
       var cardId = document.getElementById('cardSelect').value;
       var date = document.getElementById('dateInput').value;
+      var category = document.getElementById('categorySelect').value;
       var item = document.getElementById('itemInput').value;
       var amount = document.getElementById('amountInput').value;
       var submitBtn = document.getElementById('submitBtn');
+      var wasEditing = !!editingId;
+      var idBeingEdited = editingId;
       submitBtn.disabled = true;
       setLoading(true);
-      google.script.run
-        .withSuccessHandler(function (billingKeyOfNewItem) {
-          document.getElementById('itemInput').value = '';
-          document.getElementById('amountInput').value = '';
+
+      var runner = google.script.run
+        .withSuccessHandler(function () {
+          exitEditMode();
           submitBtn.disabled = false;
-          showToast('내역이 추가되었습니다.');
-          loadMonth(billingKeyOfNewItem === state.billingKey ? state.billingKey : state.billingKey);
+          showToast(wasEditing ? '내역을 수정했습니다.' : '내역이 추가되었습니다.');
+          loadMonth(state.billingKey);
         })
         .withFailureHandler(function (err) {
           submitBtn.disabled = false;
           setLoading(false);
           showToast(err.message);
-        })
-        .addExpense(cardId, date, item, amount);
+        });
+
+      if (wasEditing) {
+        runner.updateExpense(idBeingEdited, cardId, date, item, amount, category);
+      } else {
+        runner.addExpense(cardId, date, item, amount, category);
+      }
     });
 
     document.getElementById('addCardBtn').addEventListener('click', function () {

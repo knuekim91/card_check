@@ -6,6 +6,7 @@
 var CARDS_SHEET = 'Cards';
 var EXPENSES_SHEET = 'Expenses';
 var DEFAULT_CARDS = ['롯데카드(헬로티비)', '롯데카드(재홍)', '우리카드(재홍)', '삼성카드(정이)', '현금사용'];
+var CATEGORIES = ['식비', '생활용품', '교육', '의료/건강', '보험', '통신', '교통/주유', '문화/여가', '카드값/대출', '기타'];
 
 function doGet(e) {
   return HtmlService.createTemplateFromFile('Index')
@@ -32,7 +33,13 @@ function ensureSheets_() {
   var expSheet = ss.getSheetByName(EXPENSES_SHEET);
   if (!expSheet) {
     expSheet = ss.insertSheet(EXPENSES_SHEET);
-    expSheet.appendRow(['id', 'cardId', 'date', 'item', 'amount', 'createdAt']);
+    expSheet.appendRow(['id', 'cardId', 'date', 'item', 'amount', 'category', 'createdAt']);
+  } else {
+    var header = expSheet.getRange(1, 1, 1, Math.max(expSheet.getLastColumn(), 1)).getValues()[0];
+    if (header.indexOf('category') === -1) {
+      expSheet.insertColumnAfter(5);
+      expSheet.getRange(1, 6).setValue('category');
+    }
   }
   var defaultSheet = ss.getSheetByName('Sheet1') || ss.getSheetByName('시트1');
   if (defaultSheet && ss.getSheets().length > 2 && defaultSheet.getLastRow() === 0) {
@@ -150,7 +157,8 @@ function getMonthData(billingKey) {
         dateISO: Utilities.formatDate(d, tz, 'yyyy-MM-dd'),
         dateLabel: Utilities.formatDate(d, tz, 'M.d'),
         item: row[3],
-        amount: Number(row[4])
+        amount: Number(row[4]),
+        category: row[5] || '기타'
       });
     }
   }
@@ -158,9 +166,12 @@ function getMonthData(billingKey) {
 
   var totalsByCard = {};
   cards.forEach(function (c) { totalsByCard[c.id] = 0; });
+  var totalsByCategory = {};
+  CATEGORIES.forEach(function (cat) { totalsByCategory[cat] = 0; });
   var grandTotal = 0;
   expenses.forEach(function (e) {
     totalsByCard[e.cardId] = (totalsByCard[e.cardId] || 0) + e.amount;
+    totalsByCategory[e.category] = (totalsByCategory[e.category] || 0) + e.amount;
     grandTotal += e.amount;
   });
 
@@ -168,17 +179,20 @@ function getMonthData(billingKey) {
     billingKey: billingKey,
     periodLabel: formatPeriodLabel_(billingKey),
     cards: cards,
+    categories: CATEGORIES,
     expenses: expenses,
     totalsByCard: totalsByCard,
+    totalsByCategory: totalsByCategory,
     grandTotal: grandTotal,
     prevKey: shiftBillingKey_(billingKey, -1),
     nextKey: shiftBillingKey_(billingKey, 1)
   };
 }
 
-function addExpense(cardId, dateStr, item, amount) {
+function addExpense(cardId, dateStr, item, amount, category) {
   item = (item || '').trim();
   amount = Number(amount);
+  category = category || '기타';
   if (!cardId) throw new Error('카드를 선택해주세요.');
   if (!dateStr) throw new Error('날짜를 선택해주세요.');
   if (!item) throw new Error('항목을 입력해주세요.');
@@ -186,8 +200,29 @@ function addExpense(cardId, dateStr, item, amount) {
   var s = ensureSheets_();
   var id = Utilities.getUuid();
   var dateObj = parseDate_(dateStr);
-  s.expSheet.appendRow([id, cardId, dateObj, item, amount, new Date()]);
+  s.expSheet.appendRow([id, cardId, dateObj, item, amount, category, new Date()]);
   return getBillingKey_(dateObj);
+}
+
+function updateExpense(id, cardId, dateStr, item, amount, category) {
+  item = (item || '').trim();
+  amount = Number(amount);
+  category = category || '기타';
+  if (!id) throw new Error('수정할 내역을 찾을 수 없습니다.');
+  if (!cardId) throw new Error('카드를 선택해주세요.');
+  if (!dateStr) throw new Error('날짜를 선택해주세요.');
+  if (!item) throw new Error('항목을 입력해주세요.');
+  if (!amount || amount <= 0) throw new Error('금액을 올바르게 입력해주세요.');
+  var s = ensureSheets_();
+  var rows = s.expSheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === id) {
+      var dateObj = parseDate_(dateStr);
+      s.expSheet.getRange(i + 1, 2, 1, 5).setValues([[cardId, dateObj, item, amount, category]]);
+      return getBillingKey_(dateObj);
+    }
+  }
+  throw new Error('내역을 찾을 수 없습니다.');
 }
 
 function deleteExpense(id) {
