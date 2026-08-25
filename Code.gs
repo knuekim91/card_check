@@ -351,6 +351,16 @@ function kakaoRestApiKey_() {
   return key;
 }
 
+function kakaoClientSecret_() {
+  return PropertiesService.getScriptProperties().getProperty('KAKAO_CLIENT_SECRET') || '';
+}
+
+function kakaoTokenPayload_(base) {
+  var secret = kakaoClientSecret_();
+  if (secret) base.client_secret = secret;
+  return base;
+}
+
 function getKakaoLoginUrl(who) {
   var key = kakaoRestApiKey_();
   return 'https://kauth.kakao.com/oauth/authorize' +
@@ -376,12 +386,12 @@ function handleKakaoCallback_(code, who) {
   var key = kakaoRestApiKey_();
   var res = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
     method: 'post',
-    payload: {
+    payload: kakaoTokenPayload_({
       grant_type: 'authorization_code',
       client_id: key,
       redirect_uri: KAKAO_REDIRECT_URI,
       code: code
-    },
+    }),
     muteHttpExceptions: true
   });
   var data = JSON.parse(res.getContentText());
@@ -418,11 +428,11 @@ function ensureKakaoToken_(who) {
   var key = kakaoRestApiKey_();
   var res = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
     method: 'post',
-    payload: {
+    payload: kakaoTokenPayload_({
       grant_type: 'refresh_token',
       client_id: key,
       refresh_token: token.refresh_token
-    },
+    }),
     muteHttpExceptions: true
   });
   var data = JSON.parse(res.getContentText());
