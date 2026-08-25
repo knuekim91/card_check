@@ -494,6 +494,14 @@
           <button type="button" class="parking-btn loc-other" data-loc="다른곳">다른곳</button>
         </div>
         <div class="parking-status empty" id="parkingStatus">불러오는 중...</div>
+        <details class="manage-toggle" style="margin-top:14px;">
+          <summary>🔗 카카오톡 알림 연결</summary>
+          <div id="kakaoStatusWrap" style="font-size:13.5px; color:var(--text-sub); margin-bottom:10px;">불러오는 중...</div>
+          <div style="display:flex; gap:8px;">
+            <button type="button" class="secondary" id="kakaoConnectMe" style="flex:1;">내 카톡 연결</button>
+            <button type="button" class="secondary" id="kakaoConnectSpouse" style="flex:1;">아내 카톡 연결</button>
+          </div>
+        </details>
       </details>
     </section>
 
@@ -939,6 +947,31 @@
         .getWeatherInfo();
     }
 
+    function loadKakaoStatus() {
+      google.script.run
+        .withSuccessHandler(function (status) {
+          var wrap = document.getElementById('kakaoStatusWrap');
+          wrap.textContent = '나: ' + (status.me ? '✅ 연결됨' : '❌ 연결 안됨') + '  ·  아내: ' + (status.spouse ? '✅ 연결됨' : '❌ 연결 안됨');
+        })
+        .withFailureHandler(function () {
+          document.getElementById('kakaoStatusWrap').textContent = '상태를 불러오지 못했습니다.';
+        })
+        .getKakaoConnectionStatus();
+    }
+
+    document.getElementById('kakaoConnectMe').addEventListener('click', function () {
+      google.script.run
+        .withSuccessHandler(function (url) { window.open(url, '_blank'); })
+        .withFailureHandler(function (err) { showToast(err.message); })
+        .getKakaoLoginUrl('me');
+    });
+    document.getElementById('kakaoConnectSpouse').addEventListener('click', function () {
+      google.script.run
+        .withSuccessHandler(function (url) { window.open(url, '_blank'); })
+        .withFailureHandler(function (err) { showToast(err.message); })
+        .getKakaoLoginUrl('spouse');
+    });
+
     function escapeHtml(str) {
       var div = document.createElement('div');
       div.textContent = str == null ? '' : String(str);
@@ -1018,6 +1051,7 @@
     loadMonth(null);
     loadParkingStatus();
     loadWeather();
+    loadKakaoStatus();
   </script>
 </body>
 </html>
