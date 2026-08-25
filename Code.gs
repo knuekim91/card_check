@@ -58,17 +58,7 @@ function weatherMessage_(code) {
   return '비록 날씨는 흐리더라도 당신을 향한 내 마음은 불타오르고 있어 🔥';
 }
 
-var KAKAO_REDIRECT_URI = 'https://script.google.com/macros/s/AKfycbzFC0_S1LBaKLJNULCRzImiW12yRE-91nSzRqUWKBCBYjp95jkFLbr6krwDKmM4TyH-/exec';
-
 function doGet(e) {
-  if (e && e.parameter && e.parameter.code && e.parameter.state) {
-    return HtmlService.createHtmlOutput(
-      '<html><body style="font-family:sans-serif;padding:30px;word-break:break-all;">' +
-      '<p><b>code:</b> ' + e.parameter.code + '</p>' +
-      '<p><b>state:</b> ' + e.parameter.state + '</p>' +
-      '</body></html>'
-    );
-  }
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
     .setTitle('우리가족 카드 사용 현황')
@@ -341,160 +331,10 @@ function setParkingLocation(location) {
   sheet.appendRow([id, location, now]);
   var tz = Session.getScriptTimeZone();
   var label = Utilities.formatDate(now, tz, 'M월 d일 HH시 mm분');
-  var message = '🚗 차량 위치: ' + location + '\n기록시간: ' + label;
-  sendKakaoMemo_('me', message);
-  sendKakaoMemo_('spouse', message);
   return {
     location: location,
     recordedAtLabel: label
   };
-}
-
-function kakaoRestApiKey_() {
-  var key = PropertiesService.getScriptProperties().getProperty('KAKAO_REST_API_KEY');
-  if (!key) throw new Error('카카오 REST API 키가 스크립트 속성에 설정되지 않았습니다.');
-  return key;
-}
-
-function kakaoClientSecret_() {
-  return PropertiesService.getScriptProperties().getProperty('KAKAO_CLIENT_SECRET') || '';
-}
-
-function kakaoFingerprint_(value) {
-  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, value);
-  return digest.map(function (b) {
-    var v = (b + 256) % 256;
-    var hex = v.toString(16);
-    return hex.length === 1 ? '0' + hex : hex;
-  }).join('').slice(0, 8);
-}
-
-function kakaoTokenPayload_(base) {
-  var secret = kakaoClientSecret_();
-  if (secret) base.client_secret = secret;
-  return base;
-}
-
-function getKakaoLoginUrl(who) {
-  var key = kakaoRestApiKey_();
-  return 'https://kauth.kakao.com/oauth/authorize' +
-    '?response_type=code' +
-    '&client_id=' + encodeURIComponent(key) +
-    '&redirect_uri=' + encodeURIComponent(KAKAO_REDIRECT_URI) +
-    '&scope=talk_message' +
-    '&state=' + encodeURIComponent(who);
-}
-
-function getKakaoConnectionStatus() {
-  var props = PropertiesService.getScriptProperties();
-  return {
-    me: !!props.getProperty('KAKAO_TOKEN_me'),
-    spouse: !!props.getProperty('KAKAO_TOKEN_spouse')
-  };
-}
-
-function handleKakaoCallback_(code, who) {
-  if (who !== 'me' && who !== 'spouse') {
-    return HtmlService.createHtmlOutput('<p>잘못된 요청입니다.</p>');
-  }
-  var key = kakaoRestApiKey_();
-  var secret = kakaoClientSecret_();
-  var payload = {
-    grant_type: 'authorization_code',
-    client_id: key,
-    redirect_uri: KAKAO_REDIRECT_URI,
-    code: code
-  };
-  if (secret) payload.client_secret = secret;
-  var res = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
-    method: 'post',
-    contentType: 'application/x-www-form-urlencoded;charset=utf-8',
-    payload: payload,
-    muteHttpExceptions: true
-  });
-  var rawBody = res.getContentText();
-  var data = JSON.parse(rawBody);
-  if (data.error) {
-    var debugInfo = 'REST API 키 길이: ' + key.length + '자, 지문: ' + kakaoFingerprint_(key) + '<br>' +
-      'Client Secret 길이: ' + secret.length + '자, 지문: ' + kakaoFingerprint_(secret) + '<br>' +
-      'Redirect URI: ' + KAKAO_REDIRECT_URI + '<br>' +
-      '인가 코드 길이: ' + code.length + '자<br>' +
-      'HTTP 상태 코드: ' + res.getResponseCode() + '<br>' +
-      '전체 응답: ' + rawBody;
-    return HtmlService.createHtmlOutput(
-      '<html><body style="font-family:sans-serif;text-align:center;padding:60px 20px;">' +
-      '<h2>❌ 카카오 연결 실패</h2><p>' + (data.error_description || data.error) + '</p>' +
-      '<hr><p style="font-size:12px;color:#888;text-align:left;display:inline-block;">' + debugInfo + '</p>' +
-      '</body></html>'
-    );
-  }
-  var token = {
-    access_token: data.access_token,
-    refresh_token: data.refresh_token,
-    expires_at: new Date().getTime() + (data.expires_in * 1000)
-  };
-  PropertiesService.getScriptProperties().setProperty('KAKAO_TOKEN_' + who, JSON.stringify(token));
-  var label = who === 'spouse' ? '아내' : '나';
-  return HtmlService.createHtmlOutput(
-    '<html><body style="font-family:sans-serif;text-align:center;padding:60px 20px;">' +
-    '<h2>✅ ' + label + ' 카카오톡 연결 완료!</h2>' +
-    '<p>이 창은 닫으셔도 됩니다.</p>' +
-    '</body></html>'
-  );
-}
-
-function ensureKakaoToken_(who) {
-  var props = PropertiesService.getScriptProperties();
-  var raw = props.getProperty('KAKAO_TOKEN_' + who);
-  if (!raw) return null;
-  var token = JSON.parse(raw);
-  if (token.expires_at - 60000 > new Date().getTime()) {
-    return token.access_token;
-  }
-  var key = kakaoRestApiKey_();
-  var res = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
-    method: 'post',
-    payload: kakaoTokenPayload_({
-      grant_type: 'refresh_token',
-      client_id: key,
-      refresh_token: token.refresh_token
-    }),
-    muteHttpExceptions: true
-  });
-  var data = JSON.parse(res.getContentText());
-  if (data.error) {
-    Logger.log('카카오 토큰 갱신 실패(' + who + '): ' + res.getContentText());
-    return null;
-  }
-  token.access_token = data.access_token;
-  token.expires_at = new Date().getTime() + (data.expires_in * 1000);
-  if (data.refresh_token) token.refresh_token = data.refresh_token;
-  props.setProperty('KAKAO_TOKEN_' + who, JSON.stringify(token));
-  return token.access_token;
-}
-
-function sendKakaoMemo_(who, message) {
-  try {
-    var accessToken = ensureKakaoToken_(who);
-    if (!accessToken) return false;
-    var templateObject = {
-      object_type: 'text',
-      text: message,
-      link: { web_url: KAKAO_REDIRECT_URI, mobile_web_url: KAKAO_REDIRECT_URI },
-      button_title: '앱 열기'
-    };
-    var res = UrlFetchApp.fetch('https://kapi.kakao.com/v2/api/talk/memo/default/send', {
-      method: 'post',
-      headers: { Authorization: 'Bearer ' + accessToken },
-      payload: { template_object: JSON.stringify(templateObject) },
-      muteHttpExceptions: true
-    });
-    Logger.log('카카오 메시지 전송(' + who + '): ' + res.getResponseCode());
-    return res.getResponseCode() === 200;
-  } catch (err) {
-    Logger.log('카카오 메시지 전송 에러(' + who + '): ' + err);
-    return false;
-  }
 }
 
 function getWeatherInfo() {
