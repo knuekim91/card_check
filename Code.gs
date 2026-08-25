@@ -355,6 +355,15 @@ function kakaoClientSecret_() {
   return PropertiesService.getScriptProperties().getProperty('KAKAO_CLIENT_SECRET') || '';
 }
 
+function kakaoFingerprint_(value) {
+  var digest = Utilities.computeDigest(Utilities.DigestAlgorithm.MD5, value);
+  return digest.map(function (b) {
+    var v = (b + 256) % 256;
+    var hex = v.toString(16);
+    return hex.length === 1 ? '0' + hex : hex;
+  }).join('').slice(0, 8);
+}
+
 function kakaoTokenPayload_(base) {
   var secret = kakaoClientSecret_();
   if (secret) base.client_secret = secret;
@@ -397,9 +406,10 @@ function handleKakaoCallback_(code, who) {
   var data = JSON.parse(res.getContentText());
   if (data.error) {
     var secret = kakaoClientSecret_();
-    var debugInfo = 'REST API 키 길이: ' + key.length + '자 (앞4자: ' + key.slice(0, 4) + ', 뒤4자: ' + key.slice(-4) + ')<br>' +
-      'Client Secret 길이: ' + secret.length + '자 (앞4자: ' + secret.slice(0, 4) + ', 뒤4자: ' + secret.slice(-4) + ')<br>' +
-      'Redirect URI: ' + KAKAO_REDIRECT_URI;
+    var debugInfo = 'REST API 키 길이: ' + key.length + '자, 지문: ' + kakaoFingerprint_(key) + '<br>' +
+      'Client Secret 길이: ' + secret.length + '자, 지문: ' + kakaoFingerprint_(secret) + '<br>' +
+      'Redirect URI: ' + KAKAO_REDIRECT_URI + '<br>' +
+      'HTTP 상태 코드: ' + res.getResponseCode();
     return HtmlService.createHtmlOutput(
       '<html><body style="font-family:sans-serif;text-align:center;padding:60px 20px;">' +
       '<h2>❌ 카카오 연결 실패</h2><p>' + (data.error_description || data.error) + '</p>' +
