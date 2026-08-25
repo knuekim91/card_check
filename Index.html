@@ -784,7 +784,9 @@
           renderCardSummaryGrid();
           renderExpenseList();
           if (selectedCardId) {
-            document.getElementById('expensePanel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('cardSelect').value = c.id;
+            document.getElementById('expenseForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            document.getElementById('amountInput').focus();
           }
         });
         grid.appendChild(el);
