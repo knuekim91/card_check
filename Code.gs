@@ -328,8 +328,13 @@ function getWeatherInfo() {
     var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
       '&current=temperature_2m,weather_code&daily=precipitation_probability_max&timezone=Asia%2FSeoul';
     var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-    if (res.getResponseCode() !== 200) return null;
+    Logger.log('날씨 응답 코드: ' + res.getResponseCode());
+    if (res.getResponseCode() !== 200) {
+      Logger.log('날씨 응답 본문: ' + res.getContentText());
+      return null;
+    }
     var data = JSON.parse(res.getContentText());
+    Logger.log('날씨 데이터: ' + JSON.stringify(data));
     var code = data.current.weather_code;
     var temp = Math.round(data.current.temperature_2m);
     var pop = data.daily.precipitation_probability_max[0];
@@ -345,6 +350,7 @@ function getWeatherInfo() {
       message: message
     };
   } catch (err) {
+    Logger.log('날씨 에러: ' + err);
     return null;
   }
 }
