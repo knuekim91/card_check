@@ -14,6 +14,27 @@ var PARKING_LOCATIONS = ['지하2층', '지하3층', '지하4층', '다른곳'];
 var WEATHER_LAT = 35.8714;
 var WEATHER_LON = 128.6014;
 
+// 시가총액 순위는 수시로 바뀌므로 고정 목록입니다. 가격/등락률은 실시간으로 갱신됩니다.
+var KR_STOCKS = [
+  { name: '삼성전자', ticker: '005930.KS' },
+  { name: 'SK하이닉스', ticker: '000660.KS' },
+  { name: 'LG에너지솔루션', ticker: '373220.KS' },
+  { name: '삼성바이오로직스', ticker: '207940.KS' },
+  { name: '현대차', ticker: '005380.KS' }
+];
+var GLOBAL_STOCKS = [
+  { name: 'Apple', ticker: 'AAPL' },
+  { name: 'Microsoft', ticker: 'MSFT' },
+  { name: 'NVIDIA', ticker: 'NVDA' },
+  { name: 'Alphabet(Google)', ticker: 'GOOGL' },
+  { name: 'Amazon', ticker: 'AMZN' },
+  { name: 'Meta', ticker: 'META' },
+  { name: 'Broadcom', ticker: 'AVGO' },
+  { name: 'Berkshire Hathaway', ticker: 'BRK-B' },
+  { name: 'TSMC', ticker: 'TSM' },
+  { name: 'Tesla', ticker: 'TSLA' }
+];
+
 var WEATHER_CODE_MAP = {
   0: { icon: '☀️', label: '맑음' },
   1: { icon: '🌤️', label: '대체로 맑음' },
@@ -363,6 +384,52 @@ function getWeatherInfo() {
     };
   } catch (err) {
     Logger.log('날씨 에러: ' + err);
+    return null;
+  }
+}
+
+function fetchStockQuote_(ticker) {
+  return {
+    url: 'https://query1.finance.yahoo.com/v8/finance/chart/' + encodeURIComponent(ticker),
+    headers: { 'User-Agent': 'Mozilla/5.0' },
+    muteHttpExceptions: true
+  };
+}
+
+function parseStockResponse_(name, res) {
+  try {
+    if (res.getResponseCode() !== 200) return { name: name, error: true };
+    var data = JSON.parse(res.getContentText());
+    var meta = data.chart.result[0].meta;
+    var price = meta.regularMarketPrice;
+    var prevClose = meta.chartPreviousClose || meta.previousClose;
+    var change = price - prevClose;
+    var changePercent = prevClose ? (change / prevClose * 100) : 0;
+    return {
+      name: name,
+      price: price,
+      currency: meta.currency,
+      change: change,
+      changePercent: changePercent,
+      isUp: change >= 0
+    };
+  } catch (err) {
+    return { name: name, error: true };
+  }
+}
+
+function getStockInfo() {
+  try {
+    var allStocks = KR_STOCKS.concat(GLOBAL_STOCKS);
+    var requests = allStocks.map(function (s) { return fetchStockQuote_(s.ticker); });
+    var responses = UrlFetchApp.fetchAll(requests);
+    var results = allStocks.map(function (s, i) { return parseStockResponse_(s.name, responses[i]); });
+    return {
+      kr: results.slice(0, KR_STOCKS.length),
+      global: results.slice(KR_STOCKS.length)
+    };
+  } catch (err) {
+    Logger.log('주식 정보 에러: ' + err);
     return null;
   }
 }

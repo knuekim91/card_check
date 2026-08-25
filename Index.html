@@ -169,6 +169,43 @@
       font-size: 13px;
       justify-content: center;
     }
+    .stock-section-title {
+      font-size: 12px;
+      color: var(--text-sub);
+      font-weight: 700;
+      margin: 12px 0 4px;
+    }
+    .stock-section-title:first-child { margin-top: 0; }
+    .stock-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 2px;
+      border-bottom: 1px dashed var(--border);
+      font-size: 13.5px;
+    }
+    .stock-item:last-child { border-bottom: none; }
+    .stock-item .name {
+      flex: 1;
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--text);
+    }
+    .stock-item .price {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .stock-item .change {
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+      min-width: 62px;
+      text-align: right;
+    }
+    .stock-item .change.up { color: #dc2626; }
+    .stock-item .change.down { color: #2563eb; }
     details.parking-toggle[open] .parking-buttons {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -563,6 +600,13 @@
     </section>
 
     <section class="panel">
+      <details class="parking-toggle">
+        <summary><span>📈 주식 시세</span></summary>
+        <div id="stockWrap" class="empty-state">불러오는 중...</div>
+      </details>
+    </section>
+
+    <section class="panel">
       <details class="manage-toggle">
         <summary>⚙️ 카드 관리</summary>
         <div id="cardManageList"></div>
@@ -939,6 +983,47 @@
         .getWeatherInfo();
     }
 
+    function renderStockList(list, currency) {
+      return list.map(function (s) {
+        if (s.error) {
+          return '<div class="stock-item"><span class="name">' + escapeHtml(s.name) + '</span><span class="change">정보 없음</span></div>';
+        }
+        var priceStr = currency === 'KRW'
+          ? Math.round(s.price).toLocaleString('ko-KR') + '원'
+          : '$' + s.price.toFixed(2);
+        var pct = Math.abs(s.changePercent).toFixed(2);
+        var arrow = s.isUp ? '▲' : '▼';
+        var cls = s.isUp ? 'up' : 'down';
+        return '<div class="stock-item">' +
+          '<span class="name">' + escapeHtml(s.name) + '</span>' +
+          '<span class="price">' + priceStr + '</span>' +
+          '<span class="change ' + cls + '">' + arrow + ' ' + pct + '%</span>' +
+          '</div>';
+      }).join('');
+    }
+
+    function renderStocks(data) {
+      var el = document.getElementById('stockWrap');
+      if (!data) {
+        el.className = 'empty-state';
+        el.textContent = '주식 정보를 불러오지 못했습니다.';
+        return;
+      }
+      el.className = '';
+      el.innerHTML =
+        '<div class="stock-section-title">🇰🇷 국내 시총 TOP 5</div>' +
+        renderStockList(data.kr, 'KRW') +
+        '<div class="stock-section-title">🌎 해외 시총 TOP 10</div>' +
+        renderStockList(data.global, 'USD');
+    }
+
+    function loadStocks() {
+      google.script.run
+        .withSuccessHandler(renderStocks)
+        .withFailureHandler(function () { renderStocks(null); })
+        .getStockInfo();
+    }
+
     function escapeHtml(str) {
       var div = document.createElement('div');
       div.textContent = str == null ? '' : String(str);
@@ -1018,6 +1103,7 @@
     loadMonth(null);
     loadParkingStatus();
     loadWeather();
+    loadStocks();
   </script>
 </body>
 </html>
