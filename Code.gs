@@ -393,23 +393,29 @@ function handleKakaoCallback_(code, who) {
     return HtmlService.createHtmlOutput('<p>잘못된 요청입니다.</p>');
   }
   var key = kakaoRestApiKey_();
+  var secret = kakaoClientSecret_();
+  var payload = {
+    grant_type: 'authorization_code',
+    client_id: key,
+    redirect_uri: KAKAO_REDIRECT_URI,
+    code: code
+  };
+  if (secret) payload.client_secret = secret;
   var res = UrlFetchApp.fetch('https://kauth.kakao.com/oauth/token', {
     method: 'post',
-    payload: kakaoTokenPayload_({
-      grant_type: 'authorization_code',
-      client_id: key,
-      redirect_uri: KAKAO_REDIRECT_URI,
-      code: code
-    }),
+    contentType: 'application/x-www-form-urlencoded;charset=utf-8',
+    payload: payload,
     muteHttpExceptions: true
   });
-  var data = JSON.parse(res.getContentText());
+  var rawBody = res.getContentText();
+  var data = JSON.parse(rawBody);
   if (data.error) {
-    var secret = kakaoClientSecret_();
     var debugInfo = 'REST API 키 길이: ' + key.length + '자, 지문: ' + kakaoFingerprint_(key) + '<br>' +
       'Client Secret 길이: ' + secret.length + '자, 지문: ' + kakaoFingerprint_(secret) + '<br>' +
       'Redirect URI: ' + KAKAO_REDIRECT_URI + '<br>' +
-      'HTTP 상태 코드: ' + res.getResponseCode();
+      '인가 코드 길이: ' + code.length + '자<br>' +
+      'HTTP 상태 코드: ' + res.getResponseCode() + '<br>' +
+      '전체 응답: ' + rawBody;
     return HtmlService.createHtmlOutput(
       '<html><body style="font-family:sans-serif;text-align:center;padding:60px 20px;">' +
       '<h2>❌ 카카오 연결 실패</h2><p>' + (data.error_description || data.error) + '</p>' +
