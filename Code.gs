@@ -10,6 +10,41 @@ var CATEGORIES = ['식비', '생활용품', '교육', '의료/건강', '보험',
 var PARKING_SHEET = 'Parking';
 var PARKING_LOCATIONS = ['지하2층', '지하3층', '지하4층', '다른곳'];
 
+// 대구 기준 좌표. 다른 지역이면 이 값을 바꿔주세요.
+var WEATHER_LAT = 35.8714;
+var WEATHER_LON = 128.6014;
+
+var WEATHER_CODE_MAP = {
+  0: { icon: '☀️', label: '맑음' },
+  1: { icon: '🌤️', label: '대체로 맑음' },
+  2: { icon: '⛅', label: '구름 조금' },
+  3: { icon: '☁️', label: '흐림' },
+  45: { icon: '🌫️', label: '안개' },
+  48: { icon: '🌫️', label: '안개' },
+  51: { icon: '🌦️', label: '이슬비' },
+  53: { icon: '🌦️', label: '이슬비' },
+  55: { icon: '🌦️', label: '이슬비' },
+  56: { icon: '🌧️', label: '어는 이슬비' },
+  57: { icon: '🌧️', label: '어는 이슬비' },
+  61: { icon: '🌧️', label: '비' },
+  63: { icon: '🌧️', label: '비' },
+  65: { icon: '🌧️', label: '강한 비' },
+  66: { icon: '🌧️', label: '어는 비' },
+  67: { icon: '🌧️', label: '어는 비' },
+  71: { icon: '🌨️', label: '눈' },
+  73: { icon: '🌨️', label: '눈' },
+  75: { icon: '🌨️', label: '강한 눈' },
+  77: { icon: '🌨️', label: '싸락눈' },
+  80: { icon: '🌦️', label: '소나기' },
+  81: { icon: '🌦️', label: '소나기' },
+  82: { icon: '⛈️', label: '강한 소나기' },
+  85: { icon: '🌨️', label: '소나기 눈' },
+  86: { icon: '🌨️', label: '소나기 눈' },
+  95: { icon: '⛈️', label: '뇌우' },
+  96: { icon: '⛈️', label: '뇌우(우박)' },
+  99: { icon: '⛈️', label: '뇌우(우박)' }
+};
+
 function doGet(e) {
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
@@ -286,4 +321,30 @@ function setParkingLocation(location) {
     location: location,
     recordedAtLabel: Utilities.formatDate(now, tz, 'M월 d일 HH시 mm분')
   };
+}
+
+function getWeatherInfo() {
+  try {
+    var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
+      '&current=temperature_2m,weather_code&daily=precipitation_probability_max&timezone=Asia%2FSeoul';
+    var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) return null;
+    var data = JSON.parse(res.getContentText());
+    var code = data.current.weather_code;
+    var temp = Math.round(data.current.temperature_2m);
+    var pop = data.daily.precipitation_probability_max[0];
+    var meta = WEATHER_CODE_MAP[code] || { icon: '🌡️', label: '' };
+    var message = pop >= 50
+      ? '☔ 오늘은 비 올 확률이 높아요. 우산을 챙기세요!'
+      : '오늘 하루도 좋은 하루 되세요 😊';
+    return {
+      tempC: temp,
+      precipProbability: pop,
+      icon: meta.icon,
+      label: meta.label,
+      message: message
+    };
+  } catch (err) {
+    return null;
+  }
 }
