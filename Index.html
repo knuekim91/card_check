@@ -1012,11 +1012,14 @@
         return;
       }
       el.className = '';
+      var krAsOf = data.krAsOf ? ' (기준 ' + data.krAsOf + ')' : '';
+      var globalAsOf = data.globalAsOf ? ' (기준 ' + data.globalAsOf + ')' : '';
       el.innerHTML =
-        '<div class="stock-section-title">🇰🇷 국내 시총 TOP 5</div>' +
+        '<div class="stock-section-title">🇰🇷 국내 시총 TOP 5' + escapeHtml(krAsOf) + '</div>' +
         renderStockList(data.kr, 'KRW') +
-        '<div class="stock-section-title">🌎 해외 시총 TOP 10</div>' +
-        renderStockList(data.global, 'USD');
+        '<div class="stock-section-title">🌎 해외 시총 TOP 10' + escapeHtml(globalAsOf) + '</div>' +
+        renderStockList(data.global, 'USD') +
+        '<div class="empty-state" style="padding:8px 0 0;font-size:11.5px;">휴장 시간에는 마지막 거래가가 표시돼요</div>';
     }
 
     function loadStocks() {

@@ -405,17 +405,29 @@ function parseStockResponse_(name, res) {
     var prevClose = meta.chartPreviousClose || meta.previousClose;
     var change = price - prevClose;
     var changePercent = prevClose ? (change / prevClose * 100) : 0;
+    var quoteTime = meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : null;
     return {
       name: name,
       price: price,
       currency: meta.currency,
       change: change,
       changePercent: changePercent,
-      isUp: change >= 0
+      isUp: change >= 0,
+      quoteTimeMs: quoteTime ? quoteTime.getTime() : null
     };
   } catch (err) {
     return { name: name, error: true };
   }
+}
+
+function latestQuoteLabel_(list) {
+  var tz = Session.getScriptTimeZone();
+  var latestMs = 0;
+  list.forEach(function (s) {
+    if (s.quoteTimeMs && s.quoteTimeMs > latestMs) latestMs = s.quoteTimeMs;
+  });
+  if (!latestMs) return null;
+  return Utilities.formatDate(new Date(latestMs), tz, 'M/d HH:mm');
 }
 
 function getStockInfo() {
@@ -424,9 +436,13 @@ function getStockInfo() {
     var requests = allStocks.map(function (s) { return fetchStockQuote_(s.ticker); });
     var responses = UrlFetchApp.fetchAll(requests);
     var results = allStocks.map(function (s, i) { return parseStockResponse_(s.name, responses[i]); });
+    var kr = results.slice(0, KR_STOCKS.length);
+    var global = results.slice(KR_STOCKS.length);
     return {
-      kr: results.slice(0, KR_STOCKS.length),
-      global: results.slice(KR_STOCKS.length)
+      kr: kr,
+      global: global,
+      krAsOf: latestQuoteLabel_(kr),
+      globalAsOf: latestQuoteLabel_(global)
     };
   } catch (err) {
     Logger.log('주식 정보 에러: ' + err);
