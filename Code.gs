@@ -396,9 +396,14 @@ function handleKakaoCallback_(code, who) {
   });
   var data = JSON.parse(res.getContentText());
   if (data.error) {
+    var secret = kakaoClientSecret_();
+    var debugInfo = 'REST API 키 길이: ' + key.length + '자 (앞4자: ' + key.slice(0, 4) + ', 뒤4자: ' + key.slice(-4) + ')<br>' +
+      'Client Secret 길이: ' + secret.length + '자 (앞4자: ' + secret.slice(0, 4) + ', 뒤4자: ' + secret.slice(-4) + ')<br>' +
+      'Redirect URI: ' + KAKAO_REDIRECT_URI;
     return HtmlService.createHtmlOutput(
       '<html><body style="font-family:sans-serif;text-align:center;padding:60px 20px;">' +
       '<h2>❌ 카카오 연결 실패</h2><p>' + (data.error_description || data.error) + '</p>' +
+      '<hr><p style="font-size:12px;color:#888;text-align:left;display:inline-block;">' + debugInfo + '</p>' +
       '</body></html>'
     );
   }
