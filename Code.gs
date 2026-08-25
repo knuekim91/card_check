@@ -45,6 +45,19 @@ var WEATHER_CODE_MAP = {
   99: { icon: '⛈️', label: '뇌우(우박)' }
 };
 
+var WEATHER_RAINY_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99];
+var WEATHER_SUNNY_CODES = [0, 1];
+
+function weatherMessage_(code) {
+  if (WEATHER_RAINY_CODES.indexOf(code) !== -1) {
+    return '오뎅탕에 소주 한잔 어때? 🍢🍶';
+  }
+  if (WEATHER_SUNNY_CODES.indexOf(code) !== -1) {
+    return '정이야 오늘도 힘찬 하루 잘 보내. 사랑해 ☀️';
+  }
+  return '비록 날씨는 흐리더라도 당신을 향한 내 마음은 불타오르고 있어 🔥';
+}
+
 function doGet(e) {
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
@@ -339,9 +352,7 @@ function getWeatherInfo() {
     var temp = Math.round(data.current.temperature_2m);
     var pop = data.daily.precipitation_probability_max[0];
     var meta = WEATHER_CODE_MAP[code] || { icon: '🌡️', label: '' };
-    var message = pop >= 50
-      ? '☔ 오늘은 비 올 확률이 높아요. 우산을 챙기세요!'
-      : '오늘 하루도 좋은 하루 되세요 😊';
+    var message = weatherMessage_(code);
     return {
       tempC: temp,
       precipProbability: pop,
