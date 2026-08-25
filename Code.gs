@@ -62,7 +62,12 @@ var KAKAO_REDIRECT_URI = 'https://script.google.com/macros/s/AKfycbzFC0_S1LBaKLJ
 
 function doGet(e) {
   if (e && e.parameter && e.parameter.code && e.parameter.state) {
-    return handleKakaoCallback_(e.parameter.code, e.parameter.state);
+    return HtmlService.createHtmlOutput(
+      '<html><body style="font-family:sans-serif;padding:30px;word-break:break-all;">' +
+      '<p><b>code:</b> ' + e.parameter.code + '</p>' +
+      '<p><b>state:</b> ' + e.parameter.state + '</p>' +
+      '</body></html>'
+    );
   }
   return HtmlService.createTemplateFromFile('Index')
     .evaluate()
