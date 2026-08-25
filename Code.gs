@@ -7,6 +7,8 @@ var CARDS_SHEET = 'Cards';
 var EXPENSES_SHEET = 'Expenses';
 var DEFAULT_CARDS = ['롯데카드(헬로티비)', '롯데카드(재홍)', '우리카드(재홍)', '삼성카드(정이)', '현금사용'];
 var CATEGORIES = ['식비', '생활용품', '교육', '의료/건강', '보험', '통신', '교통/주유', '문화/여가', '카드값/대출', '기타'];
+var PARKING_SHEET = 'Parking';
+var PARKING_LOCATIONS = ['지하2층', '지하3층', '지하4층', '다른곳'];
 
 function doGet(e) {
   return HtmlService.createTemplateFromFile('Index')
@@ -241,4 +243,47 @@ function deleteExpense(id) {
     }
   }
   throw new Error('내역을 찾을 수 없습니다.');
+}
+
+function ensureParkingSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(PARKING_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(PARKING_SHEET);
+    sheet.appendRow(['id', 'location', 'recordedAt']);
+  }
+  return sheet;
+}
+
+function getParkingStatus() {
+  var sheet = ensureParkingSheet_();
+  var rows = sheet.getDataRange().getValues();
+  var tz = Session.getScriptTimeZone();
+  var latestRow = null;
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i];
+    if (!row[0]) continue;
+    var recordedAt = row[2] instanceof Date ? row[2] : new Date(row[2]);
+    if (!latestRow || recordedAt > latestRow.recordedAt) {
+      latestRow = { location: row[1], recordedAt: recordedAt };
+    }
+  }
+  if (!latestRow) return null;
+  return {
+    location: latestRow.location,
+    recordedAtLabel: Utilities.formatDate(latestRow.recordedAt, tz, 'M월 d일 HH시 mm분')
+  };
+}
+
+function setParkingLocation(location) {
+  if (PARKING_LOCATIONS.indexOf(location) === -1) throw new Error('올바른 위치를 선택해주세요.');
+  var sheet = ensureParkingSheet_();
+  var id = Utilities.getUuid();
+  var now = new Date();
+  sheet.appendRow([id, location, now]);
+  var tz = Session.getScriptTimeZone();
+  return {
+    location: location,
+    recordedAtLabel: Utilities.formatDate(now, tz, 'M월 d일 HH시 mm분')
+  };
 }

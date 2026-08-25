@@ -148,6 +148,56 @@
       font-size: 15px;
       margin: 0 0 12px 0;
     }
+    .parking-buttons {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .parking-btn {
+      padding: 18px 8px;
+      border: none;
+      border-radius: 12px;
+      font-size: 17px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform 0.05s;
+    }
+    .parking-btn:active { transform: scale(0.96); }
+    .parking-btn.loc-2 { background: #dbeafe; color: #1d4ed8; }
+    .parking-btn.loc-3 { background: #dcfce7; color: #15803d; }
+    .parking-btn.loc-4 { background: #fef3c7; color: #b45309; }
+    .parking-btn.loc-other { background: #f3e8ff; color: #7e22ce; }
+    .parking-status {
+      text-align: center;
+      padding: 22px 16px;
+      border-radius: var(--radius);
+      font-size: 17px;
+      font-weight: 700;
+      color: #fff;
+    }
+    .parking-status .loc {
+      display: block;
+      font-size: 28px;
+      font-weight: 800;
+      margin: 4px 0 6px;
+    }
+    .parking-status .time {
+      display: block;
+      font-size: 13px;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    .parking-status.empty {
+      background: var(--bg);
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .parking-status.loc-2 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .parking-status.loc-3 { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .parking-status.loc-4 { background: linear-gradient(135deg, #f59e0b, #b45309); }
+    .parking-status.loc-other { background: linear-gradient(135deg, #a855f7, #7e22ce); }
     .category-bars {
       display: flex;
       flex-direction: column;
@@ -393,6 +443,17 @@
   </header>
 
   <div class="container">
+    <section class="panel">
+      <h2>🚗 주차 위치 기록</h2>
+      <div class="parking-buttons">
+        <button type="button" class="parking-btn loc-2" data-loc="지하2층">지하2층</button>
+        <button type="button" class="parking-btn loc-3" data-loc="지하3층">지하3층</button>
+        <button type="button" class="parking-btn loc-4" data-loc="지하4층">지하4층</button>
+        <button type="button" class="parking-btn loc-other" data-loc="다른곳">다른곳</button>
+      </div>
+      <div class="parking-status empty" id="parkingStatus">불러오는 중...</div>
+    </section>
+
     <div class="month-nav">
       <button id="prevBtn" aria-label="이전 달">‹</button>
       <div class="period-label" id="periodLabel">불러오는 중...</div>
@@ -478,6 +539,7 @@
     var selectedCardId = null;
     var editingId = null;
     var CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#ea580c', '#64748b'];
+    var PARKING_CLASS = { '지하2층': 'loc-2', '지하3층': 'loc-3', '지하4층': 'loc-4', '다른곳': 'loc-other' };
 
     function categoryColor(cat) {
       var idx = (state && state.categories) ? state.categories.indexOf(cat) : -1;
@@ -765,6 +827,48 @@
       });
     }
 
+    function renderParkingStatus(status) {
+      var el = document.getElementById('parkingStatus');
+      if (!status) {
+        el.className = 'parking-status empty';
+        el.textContent = '아직 기록된 주차 위치가 없습니다.';
+        return;
+      }
+      el.className = 'parking-status ' + (PARKING_CLASS[status.location] || 'loc-other');
+      el.innerHTML = '현재 차량 위치는' +
+        '<span class="loc">' + escapeHtml(status.location) + '</span>입니다.' +
+        '<span class="time">기록시간: ' + escapeHtml(status.recordedAtLabel) + ' 현재</span>';
+    }
+
+    function loadParkingStatus() {
+      google.script.run
+        .withSuccessHandler(renderParkingStatus)
+        .withFailureHandler(function () {
+          var el = document.getElementById('parkingStatus');
+          el.className = 'parking-status empty';
+          el.textContent = '주차 정보를 불러오지 못했습니다.';
+        })
+        .getParkingStatus();
+    }
+
+    document.querySelectorAll('.parking-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var loc = btn.getAttribute('data-loc');
+        setLoading(true);
+        google.script.run
+          .withSuccessHandler(function (status) {
+            setLoading(false);
+            renderParkingStatus(status);
+            showToast('주차 위치를 기록했습니다.');
+          })
+          .withFailureHandler(function (err) {
+            setLoading(false);
+            showToast(err.message);
+          })
+          .setParkingLocation(loc);
+      });
+    });
+
     function escapeHtml(str) {
       var div = document.createElement('div');
       div.textContent = str == null ? '' : String(str);
@@ -842,6 +946,7 @@
     });
 
     loadMonth(null);
+    loadParkingStatus();
   </script>
 </body>
 </html>
