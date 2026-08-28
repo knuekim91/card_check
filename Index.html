@@ -1000,10 +1000,10 @@
       }
       var lines = CAR_LIST.map(function (car) {
         var s = statusMap[car];
-        var text = s ? (car + ' : ' + s.location + ' - ' + s.recordedAtLabel) : (car + ' : 기록 없음');
-        return escapeHtml(text);
+        var text = car + ' : ' + (s ? (s.location + ' - ' + s.recordedAtLabel) : '기록 없음');
+        return CAR_EMOJI[car] + ' ' + escapeHtml(text);
       });
-      summaryLabel.innerHTML = '🚗 ' + lines.join('<br>');
+      summaryLabel.innerHTML = lines.join('<br>');
     }
 
     function renderAllParkingStatus(statusMap) {
