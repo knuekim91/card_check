@@ -998,11 +998,12 @@
         summaryLabel.textContent = '🚗 주차 위치 기록';
         return;
       }
-      var parts = CAR_LIST.map(function (car) {
+      var lines = CAR_LIST.map(function (car) {
         var s = statusMap[car];
-        return s ? (car + ' : ' + s.location + ' - ' + s.recordedAtLabel) : (car + ' : 기록 없음');
+        var text = s ? (car + ' : ' + s.location + ' - ' + s.recordedAtLabel) : (car + ' : 기록 없음');
+        return escapeHtml(text);
       });
-      summaryLabel.textContent = '🚗 ' + parts.join(' / ');
+      summaryLabel.innerHTML = '🚗 ' + lines.join('<br>');
     }
 
     function renderAllParkingStatus(statusMap) {
