@@ -9,6 +9,7 @@ var DEFAULT_CARDS = ['롯데카드(헬로티비)', '롯데카드(재홍)', '우�
 var CATEGORIES = ['식비', '생활용품', '교육', '의료/건강', '보험', '통신', '교통/주유', '문화/여가', '카드값/대출', '기타'];
 var PARKING_SHEET = 'Parking';
 var PARKING_LOCATIONS = ['지하2층', '지하3층', '지하4층', '다른곳'];
+var CAR_LIST = ['검둥이', '흰둥이'];
 
 // 대구 기준 좌표. 다른 지역이면 이 값을 바꿔주세요.
 var WEATHER_LAT = 35.8714;
@@ -319,7 +320,12 @@ function ensureParkingSheet_() {
   var sheet = ss.getSheetByName(PARKING_SHEET);
   if (!sheet) {
     sheet = ss.insertSheet(PARKING_SHEET);
-    sheet.appendRow(['id', 'location', 'recordedAt']);
+    sheet.appendRow(['id', 'location', 'recordedAt', 'car']);
+  } else {
+    var header = sheet.getRange(1, 1, 1, Math.max(sheet.getLastColumn(), 1)).getValues()[0];
+    if (header.indexOf('car') === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue('car');
+    }
   }
   return sheet;
 }
@@ -328,31 +334,38 @@ function getParkingStatus() {
   var sheet = ensureParkingSheet_();
   var rows = sheet.getDataRange().getValues();
   var tz = Session.getScriptTimeZone();
-  var latestRow = null;
+  var latestByCar = {};
   for (var i = 1; i < rows.length; i++) {
     var row = rows[i];
     if (!row[0]) continue;
+    var car = row[3] || '검둥이';
     var recordedAt = row[2] instanceof Date ? row[2] : new Date(row[2]);
-    if (!latestRow || recordedAt > latestRow.recordedAt) {
-      latestRow = { location: row[1], recordedAt: recordedAt };
+    if (!latestByCar[car] || recordedAt > latestByCar[car].recordedAt) {
+      latestByCar[car] = { location: row[1], recordedAt: recordedAt };
     }
   }
-  if (!latestRow) return null;
-  return {
-    location: latestRow.location,
-    recordedAtLabel: Utilities.formatDate(latestRow.recordedAt, tz, 'M월 d일 HH시 mm분')
-  };
+  var result = {};
+  CAR_LIST.forEach(function (car) {
+    var entry = latestByCar[car];
+    result[car] = entry ? {
+      location: entry.location,
+      recordedAtLabel: Utilities.formatDate(entry.recordedAt, tz, 'M월 d일 HH시 mm분')
+    } : null;
+  });
+  return result;
 }
 
-function setParkingLocation(location) {
+function setParkingLocation(location, car) {
   if (PARKING_LOCATIONS.indexOf(location) === -1) throw new Error('올바른 위치를 선택해주세요.');
+  if (CAR_LIST.indexOf(car) === -1) car = '검둥이';
   var sheet = ensureParkingSheet_();
   var id = Utilities.getUuid();
   var now = new Date();
-  sheet.appendRow([id, location, now]);
+  sheet.appendRow([id, location, now, car]);
   var tz = Session.getScriptTimeZone();
   var label = Utilities.formatDate(now, tz, 'M월 d일 HH시 mm분');
   return {
+    car: car,
     location: location,
     recordedAtLabel: label
   };

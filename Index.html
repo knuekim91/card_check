@@ -211,6 +211,27 @@
     }
     .stock-item .change.up { color: #dc2626; }
     .stock-item .change.down { color: #2563eb; }
+    .car-select-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .car-btn {
+      padding: 10px 8px;
+      border: 2px solid var(--border);
+      border-radius: 10px;
+      background: var(--card-bg);
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .car-btn.selected {
+      border-color: var(--primary);
+      background: #eff6ff;
+      color: var(--primary);
+    }
     details.parking-toggle[open] .parking-buttons {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -256,6 +277,29 @@
       color: var(--text-sub);
       font-size: 14px;
       font-weight: 500;
+    }
+    .parking-status-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    .parking-status.small {
+      padding: 14px 8px;
+      font-size: 12px;
+    }
+    .parking-status.small .car-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      opacity: 0.9;
+      margin-bottom: 2px;
+    }
+    .parking-status.small .loc {
+      font-size: 18px;
+      margin: 2px 0 4px;
+    }
+    .parking-status.small .time {
+      font-size: 10.5px;
     }
     .parking-status.loc-2 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
     .parking-status.loc-3 { background: linear-gradient(135deg, #22c55e, #15803d); }
@@ -529,13 +573,20 @@
       <details class="parking-toggle" id="parkingDetails">
         <summary><span id="parkingSummaryLabel">🚗 주차 위치 기록</span></summary>
         <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
+        <div class="car-select-row">
+          <button type="button" class="car-btn selected" id="carBtnBlack" data-car="검둥이">⚫ 검둥이</button>
+          <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이">⚪ 흰둥이</button>
+        </div>
         <div class="parking-buttons">
           <button type="button" class="parking-btn loc-2" data-loc="지하2층">지하2층</button>
           <button type="button" class="parking-btn loc-3" data-loc="지하3층">지하3층</button>
           <button type="button" class="parking-btn loc-4" data-loc="지하4층">지하4층</button>
           <button type="button" class="parking-btn loc-other" data-loc="다른곳">다른곳</button>
         </div>
-        <div class="parking-status empty" id="parkingStatus">불러오는 중...</div>
+        <div class="parking-status-grid">
+          <div class="parking-status small empty" id="parkingStatus-black">불러오는 중...</div>
+          <div class="parking-status small empty" id="parkingStatus-white">불러오는 중...</div>
+        </div>
       </details>
     </section>
 
@@ -632,6 +683,10 @@
     var editingId = null;
     var CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#ea580c', '#64748b'];
     var PARKING_CLASS = { '지하2층': 'loc-2', '지하3층': 'loc-3', '지하4층': 'loc-4', '다른곳': 'loc-other' };
+    var CAR_LIST = ['검둥이', '흰둥이'];
+    var CAR_DOM_ID = { '검둥이': 'black', '흰둥이': 'white' };
+    var CAR_EMOJI = { '검둥이': '⚫', '흰둥이': '⚪' };
+    var selectedCar = '검둥이';
 
     function categoryColor(cat) {
       var idx = (state && state.categories) ? state.categories.indexOf(cat) : -1;
@@ -921,31 +976,57 @@
       });
     }
 
-    function renderParkingStatus(status) {
-      var el = document.getElementById('parkingStatus');
-      var summaryLabel = document.getElementById('parkingSummaryLabel');
+    function renderParkingStatusForCar(car, status) {
+      var el = document.getElementById('parkingStatus-' + CAR_DOM_ID[car]);
+      if (!el) return;
       if (!status) {
-        el.className = 'parking-status empty';
-        el.textContent = '아직 기록된 주차 위치가 없습니다.';
-        if (summaryLabel) summaryLabel.textContent = '🚗 주차 위치 기록';
+        el.className = 'parking-status small empty';
+        el.innerHTML = '<span class="car-label">' + CAR_EMOJI[car] + ' ' + escapeHtml(car) + '</span>기록 없음';
         return;
       }
-      el.className = 'parking-status ' + (PARKING_CLASS[status.location] || 'loc-other');
-      el.innerHTML = '현재 차량 위치는' +
-        '<span class="loc">' + escapeHtml(status.location) + '</span>입니다.' +
-        '<span class="time">기록시간: ' + escapeHtml(status.recordedAtLabel) + ' 현재</span>';
-      if (summaryLabel) summaryLabel.textContent = '🚗 ' + status.location + ' · ' + status.recordedAtLabel;
+      el.className = 'parking-status small ' + (PARKING_CLASS[status.location] || 'loc-other');
+      el.innerHTML =
+        '<span class="car-label">' + CAR_EMOJI[car] + ' ' + escapeHtml(car) + '</span>' +
+        '<span class="loc">' + escapeHtml(status.location) + '</span>' +
+        '<span class="time">' + escapeHtml(status.recordedAtLabel) + '</span>';
+    }
+
+    function renderParkingSummary(statusMap) {
+      var summaryLabel = document.getElementById('parkingSummaryLabel');
+      if (!summaryLabel) return;
+      if (!statusMap) {
+        summaryLabel.textContent = '🚗 주차 위치 기록';
+        return;
+      }
+      var parts = CAR_LIST.map(function (car) {
+        var s = statusMap[car];
+        return s ? (car + ' : ' + s.location + ' - ' + s.recordedAtLabel) : (car + ' : 기록 없음');
+      });
+      summaryLabel.textContent = '🚗 ' + parts.join(' / ');
+    }
+
+    function renderAllParkingStatus(statusMap) {
+      CAR_LIST.forEach(function (car) {
+        renderParkingStatusForCar(car, statusMap ? statusMap[car] : null);
+      });
+      renderParkingSummary(statusMap);
     }
 
     function loadParkingStatus() {
       google.script.run
-        .withSuccessHandler(renderParkingStatus)
-        .withFailureHandler(function () {
-          var el = document.getElementById('parkingStatus');
-          el.className = 'parking-status empty';
-          el.textContent = '주차 정보를 불러오지 못했습니다.';
-        })
+        .withSuccessHandler(renderAllParkingStatus)
+        .withFailureHandler(function () { renderAllParkingStatus(null); })
         .getParkingStatus();
+    }
+
+    document.getElementById('carBtnBlack').addEventListener('click', function () { selectCar('검둥이'); });
+    document.getElementById('carBtnWhite').addEventListener('click', function () { selectCar('흰둥이'); });
+
+    function selectCar(car) {
+      selectedCar = car;
+      document.querySelectorAll('.car-btn').forEach(function (b) {
+        b.classList.toggle('selected', b.getAttribute('data-car') === car);
+      });
     }
 
     document.querySelectorAll('.parking-btn').forEach(function (btn) {
@@ -955,14 +1036,14 @@
         google.script.run
           .withSuccessHandler(function (status) {
             setLoading(false);
-            renderParkingStatus(status);
-            showToast('주차 위치를 기록했습니다.');
+            showToast(status.car + ' 주차 위치를 기록했습니다.');
+            loadParkingStatus();
           })
           .withFailureHandler(function (err) {
             setLoading(false);
             showToast(err.message);
           })
-          .setParkingLocation(loc);
+          .setParkingLocation(loc, selectedCar);
       });
     });
 
