@@ -70,14 +70,44 @@ var WEATHER_CODE_MAP = {
 var WEATHER_RAINY_CODES = [51, 53, 55, 56, 57, 61, 63, 65, 66, 67, 71, 73, 75, 77, 80, 81, 82, 85, 86, 95, 96, 99];
 var WEATHER_SUNNY_CODES = [0, 1];
 
+var WEATHER_MESSAGES_SUNNY = [
+  '정이야 오늘도 힘찬 하루 잘 보내. 사랑해 ☀️',
+  '이렇게 맑은 날엔 당신 웃는 얼굴이 더 생각나 😊',
+  '날씨처럼 오늘 하루도 화창하게, 사랑해 정이야',
+  '햇살 좋은 날, 당신 생각이 더 많이 나네 ☀️💛',
+  '오늘 같은 날엔 손 잡고 산책하고 싶다 🚶‍♀️🚶',
+  '맑은 하늘만큼 내 마음도 당신으로 가득해 💙',
+  '오늘도 예쁘게 잘 보내, 사랑하는 정이야 🌤️'
+];
+var WEATHER_MESSAGES_CLOUDY = [
+  '비록 날씨는 흐리더라도 당신을 향한 내 마음은 불타오르고 있어 🔥',
+  '흐린 날엔 당신 목소리가 더 듣고 싶어져 📞',
+  '구름 낀 하늘도 당신이 있어 견딜만해 ☁️',
+  '날씨는 꾸물거려도 우리 사이는 늘 맑음이지 😊',
+  '흐린 날일수록 당신 생각에 마음은 화창해 💛',
+  '날씨는 흐려도 오늘 하루 당신 곁엔 좋은 일만 가득하길'
+];
+var WEATHER_MESSAGES_RAINY = [
+  '오뎅탕에 소주 한잔 어때? 🍢🍶',
+  '비 오는 날엔 당신이랑 파전에 막걸리 한잔 하고 싶다 🥞',
+  '우산 챙기고, 오늘 저녁엔 라면 어때? 🍜',
+  '빗소리 들으며 당신이랑 커피 한잔 하고 싶어 ☕',
+  '비 오는 날은 집에서 뒹굴며 당신이랑 있고 싶어 🛋️',
+  '우산 꼭 챙기고, 오늘 저녁은 따뜻한 거 먹자 🍲'
+];
+
+function pickRandom_(arr) {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
 function weatherMessage_(code) {
   if (WEATHER_RAINY_CODES.indexOf(code) !== -1) {
-    return '오뎅탕에 소주 한잔 어때? 🍢🍶';
+    return pickRandom_(WEATHER_MESSAGES_RAINY);
   }
   if (WEATHER_SUNNY_CODES.indexOf(code) !== -1) {
-    return '정이야 오늘도 힘찬 하루 잘 보내. 사랑해 ☀️';
+    return pickRandom_(WEATHER_MESSAGES_SUNNY);
   }
-  return '비록 날씨는 흐리더라도 당신을 향한 내 마음은 불타오르고 있어 🔥';
+  return pickRandom_(WEATHER_MESSAGES_CLOUDY);
 }
 
 function doGet(e) {
