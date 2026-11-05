@@ -247,14 +247,19 @@ function shiftBillingKey_(key, delta) {
   return y + '-' + (m < 10 ? '0' + m : m);
 }
 
+function shortYear_(y) {
+  var r = y % 100;
+  return (r < 10 ? '0' : '') + r;
+}
+
 function formatPeriodLabel_(key) {
   var parts = key.split('-');
   var y = parseInt(parts[0], 10);
   var m = parseInt(parts[1], 10);
   var nm = m + 1, ny = y;
   if (nm > 12) { nm = 1; ny += 1; }
-  var endLabel = (ny !== y) ? (nm + '.10 (' + ny + '년)') : (nm + '.10');
-  return y + '년 ' + m + '월 사용분 (' + m + '.11 ~ ' + endLabel + ')';
+  var endLabel = (ny !== y) ? (nm + '.10 (' + shortYear_(ny) + '년)') : (nm + '.10');
+  return shortYear_(y) + '년 ' + m + '월 사용분 (' + m + '.11 ~ ' + endLabel + ')';
 }
 
 function getCards() {
