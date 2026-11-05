@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <base target="_top">
   <meta charset="UTF-8">
   <title>우리가족 카드 사용 현황</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="https://knuekim91.github.io/card_check/assets/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="https://knuekim91.github.io/card_check/assets/favicon-32.png">
   <link rel="apple-touch-icon" href="https://knuekim91.github.io/card_check/assets/apple-touch-icon.png">
@@ -19,7 +19,29 @@
       --primary-dark: #1d4ed8;
       --danger: #dc2626;
       --danger-bg: #fef2f2;
+      --select-bg: #eff6ff;
       --radius: 14px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111827;
+        --card-bg: #1f2937;
+        --border: #374151;
+        --text: #f3f4f6;
+        --text-sub: #9ca3af;
+        --danger: #f87171;
+        --danger-bg: #450a0a;
+        --select-bg: #1e3a5f;
+      }
+      input[type=text], input[type=number], input[type=date], select {
+        background: #111827;
+      }
+      .add-card-row button {
+        background: #374151;
+      }
+      .loading-overlay {
+        background: rgba(17,24,39,0.7);
+      }
     }
     * { box-sizing: border-box; }
     body {
@@ -27,11 +49,12 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
-      padding-bottom: 40px;
+      padding-bottom: max(40px, env(safe-area-inset-bottom) + 24px);
     }
     header {
       background: var(--card-bg);
       padding: 16px 20px;
+      padding-top: max(16px, env(safe-area-inset-top));
       border-bottom: 1px solid var(--border);
       position: sticky;
       top: 0;
@@ -103,13 +126,13 @@
       font-weight: 700;
       padding: 3px 9px;
       border-radius: 20px;
-      background: rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.92);
       white-space: nowrap;
       flex-shrink: 0;
     }
-    .diff-badge.up { color: #fecaca; }
-    .diff-badge.down { color: #bbf7d0; }
-    .diff-badge.same { color: rgba(255,255,255,0.8); }
+    .diff-badge.up { color: #dc2626; }
+    .diff-badge.down { color: #16a34a; }
+    .diff-badge.same { color: var(--text-sub); }
     .card-summary-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
@@ -128,7 +151,7 @@
     .card-summary:active { background: var(--bg); }
     .card-summary.selected {
       border-color: var(--primary);
-      background: #eff6ff;
+      background: var(--select-bg);
     }
     .card-summary .name {
       font-size: 12.5px;
@@ -229,9 +252,22 @@
     }
     .car-btn.selected {
       border-color: var(--primary);
-      background: #eff6ff;
+      background: var(--select-bg);
       color: var(--primary);
     }
+    .car-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .car-dot {
+      width: 12px;
+      height: 12px;
+      flex-shrink: 0;
+    }
+    .car-dot circle { fill: #1f2937; }
+    .car-dot.white circle { fill: #f9fafb; stroke: #9ca3af; stroke-width: 1; }
     details.parking-toggle[open] .parking-buttons {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -370,6 +406,13 @@
       outline: none;
       border-color: var(--primary);
     }
+    button:focus-visible,
+    summary:focus-visible,
+    input:focus-visible,
+    select:focus-visible {
+      outline: 2px solid var(--primary);
+      outline-offset: 2px;
+    }
     button.primary {
       background: var(--primary);
       color: #fff;
@@ -457,8 +500,12 @@
       color: var(--text-sub);
       font-size: 16px;
       cursor: pointer;
-      padding: 4px 6px;
       flex-shrink: 0;
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     .expense-item .edit-btn:active { color: var(--primary); }
     .expense-item .del-btn:active { color: var(--danger); }
@@ -574,8 +621,8 @@
         <summary><span id="parkingSummaryLabel">🚗 주차 위치 기록</span></summary>
         <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
         <div class="car-select-row">
-          <button type="button" class="car-btn selected" id="carBtnBlack" data-car="검둥이">⚫ 검둥이</button>
-          <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이">⚪ 흰둥이</button>
+          <button type="button" class="car-btn selected" id="carBtnBlack" data-car="검둥이"><svg class="car-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg> 검둥이</button>
+          <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이"><svg class="car-dot white" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4.5"/></svg> 흰둥이</button>
         </div>
         <div class="parking-buttons">
           <button type="button" class="parking-btn loc-2" data-loc="지하2층">지하2층</button>
@@ -678,6 +725,21 @@
   <div class="loading-overlay" id="loadingOverlay">처리 중...</div>
 
   <script>
+    var API_URL = 'https://script.google.com/macros/s/AKfycbzFC0_S1LBaKLJNULCRzImiW12yRE-91nSzRqUWKBCBYjp95jkFLbr6krwDKmM4TyH-/exec';
+
+    function callApi(action, params) {
+      return fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: action, params: params || [] })
+      })
+        .then(function (res) { return res.json(); })
+        .then(function (json) {
+          if (!json.ok) throw new Error(json.error || '알 수 없는 오류가 발생했습니다.');
+          return json.data;
+        });
+    }
+
     var state = null;
     var selectedCardId = null;
     var editingId = null;
@@ -716,8 +778,8 @@
 
     function loadMonth(billingKey) {
       setLoading(true);
-      google.script.run
-        .withSuccessHandler(function (data) {
+      callApi('getMonthData', [billingKey])
+        .then(function (data) {
           state = data;
           render();
           setLoading(false);
@@ -725,11 +787,10 @@
             document.getElementById('dateInput').value = defaultDateForKey(data.billingKey);
           }
         })
-        .withFailureHandler(function (err) {
+        .catch(function (err) {
           setLoading(false);
           showToast('불러오기 실패: ' + err.message);
-        })
-        .getMonthData(billingKey);
+        });
     }
 
     function defaultDateForKey(key) {
@@ -890,8 +951,8 @@
             '<span class="date">' + e.dateLabel + '</span>' +
             '<span class="item">' + escapeHtml(e.item) + '</span>' +
             '<span class="amount">' + fmtWon(e.amount) + '</span>' +
-            '<button class="edit-btn" data-id="' + e.id + '" aria-label="수정">✎</button>' +
-            '<button class="del-btn" data-id="' + e.id + '" aria-label="삭제">✕</button>' +
+            '<button class="edit-btn" data-id="' + e.id + '" aria-label="수정"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"></path></svg></button>' +
+            '<button class="del-btn" data-id="' + e.id + '" aria-label="삭제"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>' +
             '</div>';
         });
         html += '</div></div>';
@@ -911,16 +972,15 @@
           var id = btn.getAttribute('data-id');
           if (!confirm('이 내역을 삭제할까요?')) return;
           setLoading(true);
-          google.script.run
-            .withSuccessHandler(function () {
+          callApi('deleteExpense', [id])
+            .then(function () {
               if (editingId === id) exitEditMode();
               loadMonth(state.billingKey);
             })
-            .withFailureHandler(function (err) {
+            .catch(function (err) {
               setLoading(false);
               showToast('삭제 실패: ' + err.message);
-            })
-            .deleteExpense(id);
+            });
         });
       });
     }
@@ -962,16 +1022,15 @@
           var name = cardNameById(id);
           if (!confirm('"' + name + '" 카드를 삭제할까요?')) return;
           setLoading(true);
-          google.script.run
-            .withSuccessHandler(function () {
+          callApi('deleteCard', [id])
+            .then(function () {
               loadMonth(state.billingKey);
               showToast('카드를 삭제했습니다.');
             })
-            .withFailureHandler(function (err) {
+            .catch(function (err) {
               setLoading(false);
               showToast(err.message);
-            })
-            .deleteCard(id);
+            });
         });
       });
     }
@@ -1014,10 +1073,9 @@
     }
 
     function loadParkingStatus() {
-      google.script.run
-        .withSuccessHandler(renderAllParkingStatus)
-        .withFailureHandler(function () { renderAllParkingStatus(null); })
-        .getParkingStatus();
+      callApi('getParkingStatus', [])
+        .then(renderAllParkingStatus)
+        .catch(function () { renderAllParkingStatus(null); });
     }
 
     document.getElementById('carBtnBlack').addEventListener('click', function () { selectCar('검둥이'); });
@@ -1034,17 +1092,16 @@
       btn.addEventListener('click', function () {
         var loc = btn.getAttribute('data-loc');
         setLoading(true);
-        google.script.run
-          .withSuccessHandler(function (status) {
+        callApi('setParkingLocation', [loc, selectedCar])
+          .then(function (status) {
             setLoading(false);
             showToast(status.car + ' 주차 위치를 기록했습니다.');
             loadParkingStatus();
           })
-          .withFailureHandler(function (err) {
+          .catch(function (err) {
             setLoading(false);
             showToast(err.message);
-          })
-          .setParkingLocation(loc, selectedCar);
+          });
       });
     });
 
@@ -1066,10 +1123,9 @@
     }
 
     function loadWeather() {
-      google.script.run
-        .withSuccessHandler(renderWeather)
-        .withFailureHandler(function () { renderWeather(null); })
-        .getWeatherInfo();
+      callApi('getWeatherInfo', [])
+        .then(renderWeather)
+        .catch(function () { renderWeather(null); });
     }
 
     function renderStockList(list, currency) {
@@ -1110,10 +1166,9 @@
     }
 
     function loadStocks() {
-      google.script.run
-        .withSuccessHandler(renderStocks)
-        .withFailureHandler(function () { renderStocks(null); })
-        .getStockInfo();
+      callApi('getStockInfo', [])
+        .then(renderStocks)
+        .catch(function () { renderStocks(null); });
     }
 
     function escapeHtml(str) {
@@ -1154,24 +1209,22 @@
       submitBtn.disabled = true;
       setLoading(true);
 
-      var runner = google.script.run
-        .withSuccessHandler(function () {
+      var apiCall = wasEditing
+        ? callApi('updateExpense', [idBeingEdited, cardId, date, item, amount, category])
+        : callApi('addExpense', [cardId, date, item, amount, category]);
+
+      apiCall
+        .then(function () {
           exitEditMode();
           submitBtn.disabled = false;
           showToast(wasEditing ? '내역을 수정했습니다.' : '내역이 추가되었습니다.');
           loadMonth(state.billingKey);
         })
-        .withFailureHandler(function (err) {
+        .catch(function (err) {
           submitBtn.disabled = false;
           setLoading(false);
           showToast(err.message);
         });
-
-      if (wasEditing) {
-        runner.updateExpense(idBeingEdited, cardId, date, item, amount, category);
-      } else {
-        runner.addExpense(cardId, date, item, amount, category);
-      }
     });
 
     document.getElementById('addCardBtn').addEventListener('click', function () {
@@ -1179,17 +1232,16 @@
       var name = input.value.trim();
       if (!name) return;
       setLoading(true);
-      google.script.run
-        .withSuccessHandler(function () {
+      callApi('addCard', [name])
+        .then(function () {
           input.value = '';
           loadMonth(state.billingKey);
           showToast('카드를 추가했습니다.');
         })
-        .withFailureHandler(function (err) {
+        .catch(function (err) {
           setLoading(false);
           showToast(err.message);
-        })
-        .addCard(name);
+        });
     });
 
     loadMonth(null);

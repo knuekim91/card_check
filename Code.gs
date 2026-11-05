@@ -131,16 +131,53 @@ function weatherMessage_(code) {
   return pickRandom_(WEATHER_MESSAGES_CLOUDY);
 }
 
+// 프런트엔드(GitHub Pages)에서 fetch()로 호출하는 JSON API 라우팅.
+// GET은 ?action=이름&params=[JSON배열] 형태, POST는 본문에 {action, params} JSON을 담아 보낸다.
+// (POST는 CORS 프리플라이트를 피하기 위해 Content-Type: text/plain 으로 보내야 한다.)
+var API_ACTIONS_ = {
+  getMonthData: getMonthData,
+  addExpense: addExpense,
+  updateExpense: updateExpense,
+  deleteExpense: deleteExpense,
+  deleteCard: deleteCard,
+  addCard: addCard,
+  getParkingStatus: getParkingStatus,
+  setParkingLocation: setParkingLocation,
+  getWeatherInfo: getWeatherInfo,
+  getStockInfo: getStockInfo
+};
+
 function doGet(e) {
-  return HtmlService.createTemplateFromFile('Index')
-    .evaluate()
-    .setTitle('우리가족 카드 사용 현황')
-    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+  return handleApiRequest_(e);
 }
 
-function include(filename) {
-  return HtmlService.createHtmlOutputFromFile(filename).getContent();
+function doPost(e) {
+  return handleApiRequest_(e);
+}
+
+function handleApiRequest_(e) {
+  var action, params;
+  try {
+    if (e.postData && e.postData.contents) {
+      var body = JSON.parse(e.postData.contents);
+      action = body.action;
+      params = body.params || [];
+    } else {
+      action = e.parameter.action;
+      params = e.parameter.params ? JSON.parse(e.parameter.params) : [];
+    }
+    var fn = API_ACTIONS_[action];
+    if (!fn) throw new Error('알 수 없는 요청입니다: ' + action);
+    var data = fn.apply(null, params);
+    return jsonOutput_({ ok: true, data: data });
+  } catch (err) {
+    return jsonOutput_({ ok: false, error: err.message });
+  }
+}
+
+function jsonOutput_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function ensureSheets_() {
