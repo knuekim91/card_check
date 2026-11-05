@@ -4,65 +4,53 @@
   <meta charset="UTF-8">
   <title>우리가족 카드 사용 현황</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1b1033">
   <link rel="icon" href="https://knuekim91.github.io/card_check/assets/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="https://knuekim91.github.io/card_check/assets/favicon-32.png">
   <link rel="apple-touch-icon" href="https://knuekim91.github.io/card_check/assets/apple-touch-icon.png">
   <link rel="manifest" href="https://knuekim91.github.io/card_check/assets/manifest.json">
   <style>
     :root {
-      --bg: #eef2fb;
-      --card-bg: #ffffff;
-      --border: #e2e8f7;
-      --text: #1f2937;
-      --text-sub: #6b7280;
-      --primary: #2563eb;
-      --primary-dark: #1d4ed8;
-      --danger: #dc2626;
-      --danger-bg: #fef2f2;
-      --select-bg: #eff6ff;
+      --bg: rgba(255,255,255,0.07);
+      --card-bg: rgba(255,255,255,0.13);
+      --border: rgba(255,255,255,0.24);
+      --text: #f8fafc;
+      --text-sub: #cbd5e1;
+      --primary: #60a5fa;
+      --primary-dark: #3b82f6;
+      --danger: #fb7185;
+      --danger-bg: rgba(248,113,113,0.2);
+      --select-bg: rgba(255,255,255,0.22);
       --radius: 14px;
-      --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
-      --shadow-md: 0 10px 28px -6px rgba(15,23,42,0.16);
-      --accent-parking: #059669;
-      --accent-category: #7c3aed;
-      --accent-form: #2563eb;
-      --accent-expense: #d97706;
-      --accent-stock: #0891b2;
-      --accent-manage: #64748b;
-    }
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f1420;
-        --card-bg: #1b2333;
-        --border: #313c54;
-        --text: #f3f4f6;
-        --text-sub: #9ca3af;
-        --danger: #f87171;
-        --danger-bg: #450a0a;
-        --select-bg: #1e3a5f;
-        --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
-        --shadow-md: 0 10px 28px -6px rgba(0,0,0,0.5);
-        --accent-parking: #10b981;
-        --accent-category: #a78bfa;
-        --accent-form: #60a5fa;
-        --accent-expense: #fbbf24;
-        --accent-stock: #22d3ee;
-        --accent-manage: #94a3b8;
-      }
-      .month-nav .period-label {
-        color: #93c5fd;
-      }
+      --shadow-sm: 0 4px 14px rgba(0,0,0,0.3);
+      --shadow-md: 0 18px 44px -10px rgba(0,0,0,0.55);
+      --glass-blur: 18px;
+      --accent-parking: #34d399;
+      --accent-category: #a78bfa;
+      --accent-form: #60a5fa;
+      --accent-expense: #fbbf24;
+      --accent-stock: #22d3ee;
+      --accent-manage: #cbd5e1;
     }
     * { box-sizing: border-box; }
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", Roboto, sans-serif;
-      background: var(--bg);
+      min-height: 100vh;
+      background:
+        radial-gradient(at 10% 6%, rgba(109,40,217,0.55), transparent 42%),
+        radial-gradient(at 88% 10%, rgba(219,39,119,0.5), transparent 45%),
+        radial-gradient(at 12% 88%, rgba(5,150,105,0.45), transparent 45%),
+        radial-gradient(at 92% 92%, rgba(37,99,235,0.55), transparent 48%),
+        linear-gradient(160deg, #0b1023, #181232 55%, #0b1023);
+      background-attachment: fixed;
       color: var(--text);
       padding-bottom: max(40px, env(safe-area-inset-bottom) + 24px);
     }
     header {
       background: linear-gradient(135deg, var(--card-bg) 0%, var(--select-bg) 160%);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       padding: 16px 20px;
       padding-top: max(16px, env(safe-area-inset-top));
       border-bottom: 1px solid var(--border);
@@ -73,7 +61,13 @@
     header h1 {
       margin: 0;
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 800;
+    }
+    header h1 .title-grad {
+      background: linear-gradient(135deg, #ffffff, #c7d2fe);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
     }
     .container {
       max-width: 720px;
@@ -82,6 +76,8 @@
     }
     .summary-group {
       background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
       border-radius: calc(var(--radius) + 4px);
       padding: 8px;
@@ -123,7 +119,7 @@
       line-height: 1.4;
       text-align: center;
       flex: 1;
-      color: var(--primary-dark);
+      color: #93c5fd;
       background: var(--select-bg);
       border-radius: 10px;
       padding: 6px 10px;
@@ -131,13 +127,14 @@
     }
     .total-card {
       background:
-        radial-gradient(circle at 85% -10%, rgba(255,255,255,0.22), transparent 55%),
-        linear-gradient(135deg, var(--primary), #4c1d95);
+        radial-gradient(circle at 85% -10%, rgba(255,255,255,0.28), transparent 55%),
+        linear-gradient(135deg, #7c3aed, #db2777 55%, #2563eb);
       color: #fff;
+      border: 1px solid rgba(255,255,255,0.3);
       border-radius: calc(var(--radius) - 2px);
       padding: 22px 20px;
       margin-bottom: 14px;
-      box-shadow: 0 4px 12px rgba(37,99,235,0.25);
+      box-shadow: 0 10px 26px -6px rgba(124,58,237,0.5);
     }
     .total-card-top {
       display: flex;
@@ -176,6 +173,8 @@
     .card-summary {
       position: relative;
       background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       border-radius: 12px;
       padding: 14px 14px 14px 18px;
       box-shadow: var(--shadow-sm);
@@ -214,6 +213,8 @@
     }
     section.panel {
       background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
       border-top-width: 3px;
       border-top-color: var(--border);
@@ -508,11 +509,11 @@
     input[type=text], input[type=number], input[type=date], select {
       width: 100%;
       padding: 10px 12px;
-      border: 1px solid var(--border);
+      border: 1px solid rgba(15,23,42,0.14);
       border-radius: 10px;
       font-size: 15px;
-      background: #fff;
-      color: var(--text);
+      background: rgba(255,255,255,0.95);
+      color: #1f2937;
     }
     input:focus, select:focus {
       outline: none;
@@ -712,7 +713,7 @@
     }
     .add-card-row input { flex: 1; }
     .add-card-row button {
-      background: var(--text);
+      background: var(--primary-dark);
       color: #fff;
       border: none;
       border-radius: 10px;
@@ -771,7 +772,9 @@
     .loading-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(255,255,255,0.6);
+      background: rgba(15,23,42,0.72);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -797,6 +800,8 @@
       display: flex;
       flex-direction: column;
       background: var(--card-bg);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       border: 1px solid var(--border);
       border-radius: 18px 18px 0 0;
       box-shadow: var(--shadow-md);
@@ -841,22 +846,11 @@
       padding: 8px 16px 16px;
       overflow-y: auto;
     }
-    @media (prefers-color-scheme: dark) {
-      input[type=text], input[type=number], input[type=date], select {
-        background: #111827;
-      }
-      .add-card-row button {
-        background: #374151;
-      }
-      .loading-overlay {
-        background: rgba(17,24,39,0.7);
-      }
-    }
   </style>
 </head>
 <body>
   <header>
-    <h1>💳 우리가족 카드 사용 현황</h1>
+    <h1>💳 <span class="title-grad">우리가족 카드 사용 현황</span></h1>
   </header>
 
   <div class="container">
