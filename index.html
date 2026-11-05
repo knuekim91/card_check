@@ -120,12 +120,13 @@
     .month-nav .period-label {
       font-weight: 800;
       font-size: 16px;
+      line-height: 1.4;
       text-align: center;
       flex: 1;
       color: var(--primary-dark);
       background: var(--select-bg);
       border-radius: 10px;
-      padding: 7px 10px;
+      padding: 6px 10px;
       margin: 0 4px;
     }
     .total-card {
@@ -991,7 +992,7 @@
     }
 
     function render() {
-      document.getElementById('periodLabel').textContent = state.periodLabel;
+      renderPeriodLabel(state.periodLabel);
       document.getElementById('grandTotal').textContent = fmtWon(state.grandTotal);
       renderDiffBadge();
 
@@ -1030,6 +1031,19 @@
 
       renderExpenseList();
       renderCardManageList();
+    }
+
+    function renderPeriodLabel(label) {
+      var el = document.getElementById('periodLabel');
+      label = label || '';
+      var parenIdx = label.indexOf('(');
+      if (parenIdx > 0) {
+        var title = label.slice(0, parenIdx).trim();
+        var range = label.slice(parenIdx).trim();
+        el.innerHTML = escapeHtml(title) + '<br>' + escapeHtml(range);
+      } else {
+        el.textContent = label;
+      }
     }
 
     function renderDiffBadge() {
