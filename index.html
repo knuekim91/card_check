@@ -986,6 +986,7 @@
     var CARD_COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
     var lastFocusedEl = null;
     var modalHistoryActive = false;
+    var exitGuardArmed = false;
     var PARKING_CLASS = { '지하2층': 'loc-2', '지하3층': 'loc-3', '지하4층': 'loc-4', '다른곳': 'loc-other' };
     var CAR_LIST = ['검둥이', '흰둥이'];
     var CAR_DOM_ID = { '검둥이': 'black', '흰둥이': 'white' };
@@ -1511,8 +1512,22 @@
     document.getElementById('categoryModal').addEventListener('click', function (ev) {
       if (ev.target === this) closeCategoryModal();
     });
+    function armExitGuard() {
+      exitGuardArmed = true;
+      history.pushState({ exitGuard: true }, '');
+    }
+    armExitGuard();
+
     window.addEventListener('popstate', function () {
-      if (modalHistoryActive) closeCategoryModal(true);
+      if (modalHistoryActive) { closeCategoryModal(true); return; }
+      if (exitGuardArmed) {
+        exitGuardArmed = false;
+        if (confirm('우리가족 카드 사용 현황 앱을 종료할까요?')) {
+          window.close();
+        } else {
+          armExitGuard();
+        }
+      }
     });
 
     document.getElementById('filterClear').addEventListener('click', function () {
