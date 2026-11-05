@@ -145,7 +145,8 @@ var API_ACTIONS_ = {
   setParkingLocation: setParkingLocation,
   getWeatherInfo: getWeatherInfo,
   getStockInfo: getStockInfo,
-  scanReceipt: scanReceipt
+  scanReceipt: scanReceipt,
+  addExpenseFromAlert: addExpenseFromAlert
 };
 
 function doGet(e) {
@@ -160,9 +161,18 @@ function handleApiRequest_(e) {
   var action, params;
   try {
     if (e.postData && e.postData.contents) {
-      var body = JSON.parse(e.postData.contents);
-      action = body.action;
-      params = body.params || [];
+      var raw = e.postData.contents;
+      if (raw.replace(/^\s+/, '').charAt(0) === '{') {
+        var body = JSON.parse(raw);
+        action = body.action;
+        params = body.params || [];
+      } else {
+        // MacroDroid 등 휴대폰 자동화 앱에서 보내는 단순 텍스트 형식.
+        // 1번째 줄 = 비밀키, 2번째 줄 = 카드 이름, 3번째 줄부터 = 문자/알림 전체 내용.
+        var lines = raw.split('\n');
+        action = 'addExpenseFromAlert';
+        params = [lines[0], lines[1], lines.slice(2).join('\n')];
+      }
     } else {
       action = e.parameter.action;
       params = e.parameter.params ? JSON.parse(e.parameter.params) : [];
@@ -662,4 +672,64 @@ function parseReceiptText_(text) {
     dateISO: dateISO,
     rawText: text
   };
+}
+
+// 카드사 결제 문자/알림톡을 휴대폰 자동화 앱(MacroDroid 등)이 감지해서
+// 이 함수로 그대로 보내면, 금액/날짜/가맹점을 읽어 자동으로 지출 내역을
+// 추가합니다. 비밀키는 스크립트 속성(ALERT_SECRET)에 저장해 쓰며,
+// 깃허브에 올라가는 코드에는 비밀키를 직접 적지 않습니다.
+// "취소" 문자는 실수로 중복/역방향 입력되는 걸 막기 위해 자동으로 건너뜁니다.
+function addExpenseFromAlert(secret, cardName, text) {
+  var expected = PropertiesService.getScriptProperties().getProperty('ALERT_SECRET');
+  if (!expected) {
+    throw new Error('ALERT_SECRET 스크립트 속성이 설정돼 있지 않습니다.');
+  }
+  if (secret !== expected) {
+    throw new Error('비밀키가 올바르지 않습니다.');
+  }
+  if (/취소/.test(text)) {
+    throw new Error('"취소" 문자는 자동으로 추가하지 않습니다. 필요하면 직접 입력해주세요.');
+  }
+
+  var parsed = parseCardAlertText_(text);
+  var cards = getCards();
+  var matched = cards.filter(function (c) { return c.name === cardName; })[0];
+  if (!matched) {
+    throw new Error('"' + cardName + '" 이름의 카드를 찾을 수 없습니다. 카드 관리에 등록된 이름과 똑같이 맞춰주세요.');
+  }
+
+  addExpense(matched.id, parsed.dateStr, parsed.item, parsed.amount, '기타');
+  return { cardName: cardName, item: parsed.item, amount: parsed.amount, dateStr: parsed.dateStr };
+}
+
+function parseCardAlertText_(text) {
+  var lines = String(text).split('\n')
+    .map(function (l) { return l.trim(); })
+    .filter(function (l) { return l; });
+
+  var amount = null;
+  var dateStr = null;
+  var item = '';
+  var year = new Date().getFullYear();
+
+  lines.forEach(function (line) {
+    if (amount === null) {
+      var am = line.match(/^([0-9][0-9,]*)\s*원/);
+      if (am) amount = parseInt(am[1].replace(/,/g, ''), 10);
+    }
+    if (!dateStr) {
+      var dm = line.match(/^(\d{1,2})\/(\d{1,2})\s+\d{1,2}:\d{2}\s+(.+)/);
+      if (dm) {
+        var mm = dm[1].length < 2 ? '0' + dm[1] : dm[1];
+        var dd = dm[2].length < 2 ? '0' + dm[2] : dm[2];
+        dateStr = year + '-' + mm + '-' + dd;
+        item = dm[3].trim();
+      }
+    }
+  });
+
+  if (amount === null) throw new Error('문자에서 금액을 찾지 못했습니다: ' + text);
+  if (!dateStr) throw new Error('문자에서 날짜/가맹점을 찾지 못했습니다: ' + text);
+
+  return { amount: amount, dateStr: dateStr, item: item || '카드 승인' };
 }
