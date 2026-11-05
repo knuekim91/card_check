@@ -593,38 +593,47 @@
     }
     .expense-item {
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
-      gap: 10px;
+      gap: 2px 10px;
       padding: 9px 2px;
       border-bottom: 1px dashed var(--border);
     }
     .expense-item:last-child { border-bottom: none; }
     .expense-item .cat-dot {
+      order: 1;
       width: 8px;
       height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
     .expense-item .date {
+      order: 2;
       font-size: 12.5px;
       color: var(--text-sub);
       width: 40px;
       flex-shrink: 0;
     }
     .expense-item .item {
-      flex: 1;
+      order: 6;
+      flex: 1 1 100%;
       font-size: 14.5px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      word-break: break-word;
+      padding-left: 18px;
     }
     .expense-item .amount {
+      order: 3;
+      margin-left: auto;
       font-size: 14.5px;
       font-weight: 700;
       flex-shrink: 0;
     }
     .expense-item .edit-btn,
     .expense-item .del-btn {
+      order: 4;
       background: none;
       border: none;
       color: var(--text-sub);
@@ -637,6 +646,7 @@
       align-items: center;
       justify-content: center;
     }
+    .expense-item .del-btn { order: 5; }
     .expense-item .edit-btn:active { color: var(--primary); }
     .expense-item .del-btn:active { color: var(--danger); }
     .empty-state {
