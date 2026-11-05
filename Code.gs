@@ -561,7 +561,7 @@ function getStockInfo() {
 // 딱 한 번 직접 선택해서 ▶ 실행 버튼으로 실행해주세요. 권한 승인 창이 뜨면
 // 승인하면 됩니다("Google에서 확인하지 않은 앱" 경고가 뜨면 고급 > 이동을 누르세요).
 // 실행 로그에 "Drive 권한 승인 완료"가 보이면 성공입니다.
-function authorizeDriveForReceipts_() {
+function authorizeDriveForReceipts() {
   var blob = Utilities.newBlob('권한 승인 테스트', 'text/plain', 'authorize-test.txt');
   var fileName = 'authorize-test-' + new Date().getTime();
   var docId;
