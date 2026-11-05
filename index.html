@@ -662,6 +662,13 @@
       font-size: 13.5px;
       padding: 24px 0;
     }
+    .app-footer {
+      text-align: center;
+      font-size: 11px;
+      color: var(--text-sub);
+      opacity: 0.6;
+      padding: 18px 0 4px;
+    }
     .card-manage-item {
       display: flex;
       align-items: center;
@@ -939,6 +946,8 @@
         </div>
       </details>
     </section>
+
+    <footer class="app-footer">v1.1.0 · 2026.11.05 업데이트</footer>
   </div>
 
   <div id="toast"></div>
@@ -1341,20 +1350,32 @@
       document.getElementById('parkingDetails').open = true;
     });
 
+    function recordParkingLocation(loc) {
+      setLoading(true);
+      callApi('setParkingLocation', [loc, selectedCar])
+        .then(function (status) {
+          setLoading(false);
+          showToast(status.car + ' 주차 위치를 기록했습니다.');
+          loadParkingStatus();
+        })
+        .catch(function (err) {
+          setLoading(false);
+          showToast(err.message);
+        });
+    }
+
     document.querySelectorAll('.parking-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
         var loc = btn.getAttribute('data-loc');
-        setLoading(true);
-        callApi('setParkingLocation', [loc, selectedCar])
-          .then(function (status) {
-            setLoading(false);
-            showToast(status.car + ' 주차 위치를 기록했습니다.');
-            loadParkingStatus();
-          })
-          .catch(function (err) {
-            setLoading(false);
-            showToast(err.message);
-          });
+        if (loc === '다른곳') {
+          var typed = window.prompt('주차 위치를 입력해주세요 (예: 엄마집, 이마트 주차장)', '');
+          if (typed === null) return;
+          typed = typed.trim();
+          if (!typed) { showToast('위치를 입력해주세요.'); return; }
+          recordParkingLocation(typed);
+          return;
+        }
+        recordParkingLocation(loc);
       });
     });
 
