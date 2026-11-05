@@ -570,6 +570,9 @@ function authorizeDriveForReceipts() {
   } else {
     docId = Drive.Files.create({ name: fileName, mimeType: 'application/vnd.google-apps.document' }, blob, { ocrLanguage: 'ko' }).id;
   }
+  // scanReceipt()가 실제로 쓰는 것과 동일한 권한(Drive + 문서 읽기)을 여기서도 써서
+  // 한 번에 전부 승인받도록 합니다.
+  DocumentApp.openById(docId).getBody().getText();
   DriveApp.getFileById(docId).setTrashed(true);
   Logger.log('Drive 권한 승인 완료');
 }
