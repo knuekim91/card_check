@@ -922,6 +922,7 @@
     var CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#ea580c', '#64748b'];
     var CARD_COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
     var lastFocusedEl = null;
+    var modalHistoryActive = false;
     var PARKING_CLASS = { '지하2층': 'loc-2', '지하3층': 'loc-3', '지하4층': 'loc-4', '다른곳': 'loc-other' };
     var CAR_LIST = ['검둥이', '흰둥이'];
     var CAR_DOM_ID = { '검둥이': 'black', '흰둥이': 'white' };
@@ -1406,12 +1407,20 @@
       overlay.hidden = false;
       document.getElementById('categoryModalClose').focus();
       document.addEventListener('keydown', onModalKeydown);
+      modalHistoryActive = true;
+      history.pushState({ categoryModal: true }, '');
     }
 
-    function closeCategoryModal() {
+    function closeCategoryModal(fromPopstate) {
       document.getElementById('categoryModal').hidden = true;
       document.removeEventListener('keydown', onModalKeydown);
       if (lastFocusedEl && lastFocusedEl.focus) lastFocusedEl.focus();
+      if (modalHistoryActive) {
+        modalHistoryActive = false;
+        if (fromPopstate !== true) {
+          history.back();
+        }
+      }
     }
 
     function onModalKeydown(ev) {
@@ -1435,9 +1444,12 @@
       }
     }
 
-    document.getElementById('categoryModalClose').addEventListener('click', closeCategoryModal);
+    document.getElementById('categoryModalClose').addEventListener('click', function () { closeCategoryModal(); });
     document.getElementById('categoryModal').addEventListener('click', function (ev) {
       if (ev.target === this) closeCategoryModal();
+    });
+    window.addEventListener('popstate', function () {
+      if (modalHistoryActive) closeCategoryModal(true);
     });
 
     document.getElementById('filterClear').addEventListener('click', function () {
