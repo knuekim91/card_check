@@ -144,7 +144,8 @@ var API_ACTIONS_ = {
   getParkingStatus: getParkingStatus,
   setParkingLocation: setParkingLocation,
   getWeatherInfo: getWeatherInfo,
-  getStockInfo: getStockInfo
+  getStockInfo: getStockInfo,
+  scanReceipt: scanReceipt
 };
 
 function doGet(e) {
@@ -554,4 +555,83 @@ function getStockInfo() {
     Logger.log('주식 정보 에러: ' + err);
     return null;
   }
+}
+
+// 영수증 사진을 구글 드라이브의 무료 OCR(이미지 -> 구글 문서 변환)로 글자를 읽어
+// 날짜/금액/상호명을 추정합니다. 정확도가 완벽하지 않으므로 프런트에서는
+// 항상 사용자가 결과를 확인/수정한 뒤 저장하도록 되어 있습니다.
+// 사전 준비: Apps Script 편집기 왼쪽 "서비스"(+) 에서 "Drive API"를 추가해야 합니다.
+function scanReceipt(base64Image) {
+  if (typeof Drive === 'undefined') {
+    throw new Error('영수증 인식 기능을 쓰려면 Apps Script 편집기에서 서비스(+) > Drive API를 추가해야 합니다.');
+  }
+  var m = String(base64Image).match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
+  var mimeType = m ? m[1] : 'image/jpeg';
+  var data = m ? m[2] : base64Image;
+  var bytes = Utilities.base64Decode(data);
+  var blob = Utilities.newBlob(bytes, mimeType, 'receipt.jpg');
+
+  var resource = {
+    title: 'receipt-ocr-' + new Date().getTime(),
+    mimeType: 'application/vnd.google-apps.document'
+  };
+  var file = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ko' });
+  var docId = file.id;
+  var text = '';
+  try {
+    text = DocumentApp.openById(docId).getBody().getText();
+  } finally {
+    try { Drive.Files.remove(docId); } catch (cleanupErr) { /* 정리 실패는 무시 */ }
+  }
+
+  return parseReceiptText_(text);
+}
+
+function parseReceiptText_(text) {
+  var lines = String(text).split('\n')
+    .map(function (l) { return l.trim(); })
+    .filter(function (l) { return l; });
+
+  var dateISO = null;
+  var dateRe = /(20\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/;
+  for (var i = 0; i < lines.length; i++) {
+    var dm = lines[i].match(dateRe);
+    if (dm) {
+      var y = dm[1];
+      var mo = ('0' + dm[2]).slice(-2);
+      var d = ('0' + dm[3]).slice(-2);
+      dateISO = y + '-' + mo + '-' + d;
+      break;
+    }
+  }
+
+  var amount = null;
+  var amountKeywords = ['합계', '총액', '받을금액', '결제금액', '승인금액', '청구금액', '카드금액', '합계금액'];
+  var numRe = /([0-9][0-9,]{2,})\s*원?/;
+  for (var j = 0; j < lines.length; j++) {
+    var hasKeyword = amountKeywords.some(function (k) { return lines[j].indexOf(k) !== -1; });
+    if (hasKeyword) {
+      var nm = lines[j].match(numRe);
+      if (nm) {
+        var n = parseInt(nm[1].replace(/,/g, ''), 10);
+        if (n >= 100) { amount = n; break; }
+      }
+    }
+  }
+  if (amount === null) {
+    var all = String(text).match(/[0-9][0-9,]{2,}/g) || [];
+    var nums = all
+      .map(function (s) { return parseInt(s.replace(/,/g, ''), 10); })
+      .filter(function (n) { return n >= 100 && n < 10000000; });
+    if (nums.length) amount = Math.max.apply(null, nums);
+  }
+
+  var item = lines.length ? lines[0] : '';
+
+  return {
+    item: item,
+    amount: amount,
+    dateISO: dateISO,
+    rawText: text
+  };
 }
