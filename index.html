@@ -21,6 +21,8 @@
       --danger-bg: #fef2f2;
       --select-bg: #eff6ff;
       --radius: 14px;
+      --shadow-sm: 0 1px 3px rgba(15,23,42,0.06);
+      --shadow-md: 0 10px 28px -6px rgba(15,23,42,0.16);
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -32,6 +34,8 @@
         --danger: #f87171;
         --danger-bg: #450a0a;
         --select-bg: #1e3a5f;
+        --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+        --shadow-md: 0 10px 28px -6px rgba(0,0,0,0.5);
       }
       input[type=text], input[type=number], input[type=date], select {
         background: #111827;
@@ -70,12 +74,28 @@
       margin: 0 auto;
       padding: 16px;
     }
+    .summary-group {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) + 4px);
+      padding: 8px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-md);
+    }
+    .summary-group .month-nav {
+      box-shadow: none;
+      margin-bottom: 8px;
+      background: var(--bg);
+    }
+    .summary-group .total-card {
+      margin-bottom: 0;
+    }
     .month-nav {
       display: flex;
       align-items: center;
       justify-content: space-between;
       background: var(--card-bg);
-      border-radius: var(--radius);
+      border-radius: calc(var(--radius) - 2px);
       padding: 10px 12px;
       margin-bottom: 14px;
       box-shadow: 0 1px 2px rgba(0,0,0,0.04);
@@ -100,7 +120,7 @@
     .total-card {
       background: linear-gradient(135deg, var(--primary), var(--primary-dark));
       color: #fff;
-      border-radius: var(--radius);
+      border-radius: calc(var(--radius) - 2px);
       padding: 22px 20px;
       margin-bottom: 14px;
       box-shadow: 0 4px 12px rgba(37,99,235,0.25);
@@ -140,18 +160,31 @@
       margin-bottom: 14px;
     }
     .card-summary {
+      position: relative;
       background: var(--card-bg);
       border-radius: 12px;
-      padding: 14px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      padding: 14px 14px 14px 18px;
+      box-shadow: var(--shadow-sm);
       cursor: pointer;
-      border: 2px solid transparent;
-      transition: border-color 0.15s, background 0.15s;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .card-summary::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      bottom: 10px;
+      left: 0;
+      width: 4px;
+      border-radius: 0 4px 4px 0;
+      background: var(--accent, var(--text-sub));
     }
     .card-summary:active { background: var(--bg); }
     .card-summary.selected {
       border-color: var(--primary);
       background: var(--select-bg);
+      box-shadow: var(--shadow-md);
     }
     .card-summary .name {
       font-size: 12.5px;
@@ -167,14 +200,21 @@
     }
     section.panel {
       background: var(--card-bg);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 16px;
       margin-bottom: 14px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      box-shadow: var(--shadow-sm);
     }
     section.panel h2 {
       font-size: 15px;
       margin: 0 0 12px 0;
+    }
+    .section-title {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 0 0 10px;
     }
     .weather-card {
       display: flex;
@@ -346,6 +386,27 @@
       flex-direction: column;
       gap: 13px;
     }
+    .category-bar-row {
+      display: block;
+      width: 100%;
+      background: none;
+      border: none;
+      padding: 6px 6px;
+      margin: -6px -6px 0;
+      font: inherit;
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: background 0.15s;
+    }
+    .category-bar-row:hover,
+    .category-bar-row:active {
+      background: var(--bg);
+    }
+    .category-bar-row:hover .cat-bar-name {
+      color: var(--primary);
+    }
     .cat-bar-top {
       display: flex;
       justify-content: space-between;
@@ -443,7 +504,13 @@
     }
     button.secondary:active { background: var(--border); }
     .expense-group {
-      margin-bottom: 14px;
+      margin-bottom: 12px;
+      padding: 10px 12px 4px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-left-width: 4px;
+      border-left-style: solid;
+      border-radius: 12px;
     }
     .expense-group:last-child { margin-bottom: 0; }
     .expense-group .group-header {
@@ -452,7 +519,7 @@
       align-items: center;
       font-size: 13.5px;
       font-weight: 700;
-      padding: 4px 2px 8px 2px;
+      padding: 0 0 8px 0;
       border-bottom: 1px solid var(--border);
       margin-bottom: 6px;
     }
@@ -608,6 +675,67 @@
       z-index: 100;
     }
     .loading-overlay.show { display: flex; }
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15,23,42,0.52);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      z-index: 200;
+    }
+    .modal-overlay[hidden] { display: none; }
+    .modal-card {
+      width: 100%;
+      max-width: 480px;
+      max-height: 78vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 18px 18px 0 0;
+      box-shadow: var(--shadow-md);
+      animation: modalUp 0.18s ease-out;
+    }
+    @keyframes modalUp {
+      from { transform: translateY(16px); opacity: 0.6; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    @media (min-width: 540px) {
+      .modal-overlay { align-items: center; padding: 16px; }
+      .modal-card { border-radius: 18px; }
+    }
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .modal-header h3 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      min-width: 44px;
+      min-height: 44px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      border-radius: 10px;
+    }
+    .modal-close:active { background: var(--bg); color: var(--danger); }
+    .modal-body {
+      padding: 8px 16px 16px;
+      overflow-y: auto;
+    }
   </style>
 </head>
 <body>
@@ -620,6 +748,7 @@
       <details class="parking-toggle" id="parkingDetails">
         <summary><span id="parkingSummaryLabel">🚗 주차 위치 기록</span></summary>
         <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
+        <h3 class="section-title">🚘 우리집 차량 관리</h3>
         <div class="car-select-row">
           <button type="button" class="car-btn selected" id="carBtnBlack" data-car="검둥이"><svg class="car-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg> 검둥이</button>
           <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이"><svg class="car-dot white" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4.5"/></svg> 흰둥이</button>
@@ -637,18 +766,20 @@
       </details>
     </section>
 
-    <div class="month-nav">
-      <button id="prevBtn" aria-label="이전 달">‹</button>
-      <div class="period-label" id="periodLabel">불러오는 중...</div>
-      <button id="nextBtn" aria-label="다음 달">›</button>
-    </div>
-
-    <div class="total-card">
-      <div class="total-card-top">
-        <div class="label">이번 정산월 총 지출</div>
-        <div class="diff-badge" id="diffBadge"></div>
+    <div class="summary-group">
+      <div class="month-nav">
+        <button id="prevBtn" aria-label="이전 달">‹</button>
+        <div class="period-label" id="periodLabel">불러오는 중...</div>
+        <button id="nextBtn" aria-label="다음 달">›</button>
       </div>
-      <div class="amount" id="grandTotal">0원</div>
+
+      <div class="total-card">
+        <div class="total-card-top">
+          <div class="label">이번 정산월 총 지출</div>
+          <div class="diff-badge" id="diffBadge"></div>
+        </div>
+        <div class="amount" id="grandTotal">0원</div>
+      </div>
     </div>
 
     <div class="card-summary-grid" id="cardSummaryGrid"></div>
@@ -724,6 +855,18 @@
   <div id="toast"></div>
   <div class="loading-overlay" id="loadingOverlay">처리 중...</div>
 
+  <div class="modal-overlay" id="categoryModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">카테고리</h3>
+        <button type="button" class="modal-close" id="categoryModalClose" aria-label="닫기">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="categoryModalBody"></div>
+    </div>
+  </div>
+
   <script>
     var API_URL = 'https://script.google.com/macros/s/AKfycbzFC0_S1LBaKLJNULCRzImiW12yRE-91nSzRqUWKBCBYjp95jkFLbr6krwDKmM4TyH-/exec';
 
@@ -744,6 +887,8 @@
     var selectedCardId = null;
     var editingId = null;
     var CATEGORY_COLORS = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#65a30d', '#ea580c', '#64748b'];
+    var CARD_COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
+    var lastFocusedEl = null;
     var PARKING_CLASS = { '지하2층': 'loc-2', '지하3층': 'loc-3', '지하4층': 'loc-4', '다른곳': 'loc-other' };
     var CAR_LIST = ['검둥이', '흰둥이'];
     var CAR_DOM_ID = { '검둥이': 'black', '흰둥이': 'white' };
@@ -754,6 +899,12 @@
       var idx = (state && state.categories) ? state.categories.indexOf(cat) : -1;
       if (idx === -1) idx = 0;
       return CATEGORY_COLORS[idx % CATEGORY_COLORS.length];
+    }
+
+    function cardColor(cardId) {
+      var idx = (state && state.cards) ? state.cards.findIndex(function (c) { return c.id === cardId; }) : -1;
+      if (idx === -1) idx = 0;
+      return CARD_COLORS[idx % CARD_COLORS.length];
     }
 
     function fmtWon(n) {
@@ -881,16 +1032,22 @@
       var rowsHtml = entries.map(function (e) {
         var pct = Math.round(e.amount / total * 100);
         var barWidth = Math.max(4, Math.round(e.amount / maxAmount * 100));
-        return '<div class="category-bar-row">' +
+        return '<button type="button" class="category-bar-row" data-cat="' + escapeHtml(e.cat) + '">' +
           '<div class="cat-bar-top">' +
             '<span class="cat-bar-name">' + escapeHtml(e.cat) + '</span>' +
             '<span class="cat-bar-amount">' + fmtWon(e.amount) + ' · ' + pct + '%</span>' +
           '</div>' +
           '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + barWidth + '%;background:' + e.color + ';"></div></div>' +
-          '</div>';
+          '</button>';
       }).join('');
 
       wrap.innerHTML = '<div class="category-bars">' + rowsHtml + '</div>';
+
+      wrap.querySelectorAll('.category-bar-row').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          openCategoryModal(btn.getAttribute('data-cat'));
+        });
+      });
     }
 
     function renderCardSummaryGrid() {
@@ -899,6 +1056,7 @@
       state.cards.forEach(function (c) {
         var el = document.createElement('div');
         el.className = 'card-summary' + (c.id === selectedCardId ? ' selected' : '');
+        el.style.setProperty('--accent', cardColor(c.id));
         el.innerHTML = '<div class="name">' + escapeHtml(c.name) + '</div><div class="amount">' + fmtWon(state.totalsByCard[c.id] || 0) + '</div>';
         el.addEventListener('click', function () {
           selectedCardId = (selectedCardId === c.id) ? null : c.id;
@@ -942,7 +1100,7 @@
       cardsToShow.forEach(function (c) {
         var items = byCard[c.id] || [];
         if (!items.length) return;
-        html += '<div class="expense-group">';
+        html += '<div class="expense-group" style="border-left-color:' + cardColor(c.id) + '">';
         html += '<div class="group-header"><span>' + escapeHtml(c.name) + '</span><span class="group-total">' + fmtWon(state.totalsByCard[c.id] || 0) + '</span></div>';
         html += '<div class="expense-list">';
         items.forEach(function (e) {
@@ -1176,6 +1334,65 @@
       div.textContent = str == null ? '' : String(str);
       return div.innerHTML;
     }
+
+    function openCategoryModal(cat) {
+      var list = (state.expenses || []).filter(function (e) { return (e.category || '기타') === cat; });
+      var total = list.reduce(function (sum, e) { return sum + e.amount; }, 0);
+      document.getElementById('categoryModalTitle').textContent = cat + ' · ' + fmtWon(total);
+
+      var body = document.getElementById('categoryModalBody');
+      if (!list.length) {
+        body.innerHTML = '<div class="empty-state">이번 정산월에 해당 카테고리 내역이 없습니다.</div>';
+      } else {
+        var sorted = list.slice().sort(function (a, b) { return a.dateISO < b.dateISO ? 1 : -1; });
+        body.innerHTML = sorted.map(function (e) {
+          return '<div class="expense-item">' +
+            '<span class="cat-dot" style="background:' + categoryColor(e.category) + '"></span>' +
+            '<span class="date">' + e.dateLabel + '</span>' +
+            '<span class="item">' + escapeHtml(e.item) + ' · ' + escapeHtml(cardNameById(e.cardId)) + '</span>' +
+            '<span class="amount">' + fmtWon(e.amount) + '</span>' +
+            '</div>';
+        }).join('');
+      }
+
+      lastFocusedEl = document.activeElement;
+      var overlay = document.getElementById('categoryModal');
+      overlay.hidden = false;
+      document.getElementById('categoryModalClose').focus();
+      document.addEventListener('keydown', onModalKeydown);
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').hidden = true;
+      document.removeEventListener('keydown', onModalKeydown);
+      if (lastFocusedEl && lastFocusedEl.focus) lastFocusedEl.focus();
+    }
+
+    function onModalKeydown(ev) {
+      if (ev.key === 'Escape') {
+        closeCategoryModal();
+        return;
+      }
+      if (ev.key === 'Tab') {
+        var modal = document.getElementById('categoryModal');
+        var focusables = modal.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        var first = focusables[0];
+        var last = focusables[focusables.length - 1];
+        if (ev.shiftKey && document.activeElement === first) {
+          ev.preventDefault();
+          last.focus();
+        } else if (!ev.shiftKey && document.activeElement === last) {
+          ev.preventDefault();
+          first.focus();
+        }
+      }
+    }
+
+    document.getElementById('categoryModalClose').addEventListener('click', closeCategoryModal);
+    document.getElementById('categoryModal').addEventListener('click', function (ev) {
+      if (ev.target === this) closeCategoryModal();
+    });
 
     document.getElementById('filterClear').addEventListener('click', function () {
       selectedCardId = null;
