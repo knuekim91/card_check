@@ -313,47 +313,6 @@
     }
     .stock-item .change.up { color: #dc2626; }
     .stock-item .change.down { color: #2563eb; }
-    .car-select-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 12px;
-    }
-    .car-btn {
-      padding: 11px 8px;
-      border: 2px solid var(--border);
-      border-radius: 10px;
-      background: var(--card-bg);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      color: var(--text-sub);
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: transform 0.05s, box-shadow 0.15s;
-    }
-    .car-btn:active { transform: scale(0.97); }
-    .car-btn.selected {
-      border-color: #fbbf24;
-      background: linear-gradient(135deg, rgba(96,165,250,0.5), rgba(59,130,246,0.6));
-      color: #fff;
-      box-shadow: 0 0 0 2px rgba(251,191,36,0.25), 0 6px 14px -4px rgba(37,99,235,0.55);
-    }
-    .car-btn.selected .car-dot circle { fill: #fff; }
-    .car-btn.selected .car-dot.white circle { fill: #fff; stroke: rgba(255,255,255,0.6); }
-    .car-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-    }
-    .car-dot {
-      width: 12px;
-      height: 12px;
-      flex-shrink: 0;
-    }
-    .car-dot circle { fill: #1f2937; }
-    .car-dot.white circle { fill: #f9fafb; stroke: #9ca3af; stroke-width: 1; }
     details.parking-toggle[open] .parking-buttons {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
@@ -394,6 +353,13 @@
       font-weight: 700;
       color: #fff;
       box-shadow: 0 8px 18px -6px rgba(15,23,42,0.4);
+      cursor: pointer;
+      transition: transform 0.05s, box-shadow 0.15s, border-color 0.15s;
+    }
+    .parking-status:active { transform: scale(0.97); }
+    .parking-status.selected {
+      border-color: #fbbf24;
+      box-shadow: 0 0 0 2px rgba(251,191,36,0.3), 0 8px 18px -6px rgba(15,23,42,0.4);
     }
     .parking-status .loc {
       display: block;
@@ -871,10 +837,6 @@
       </div>
       <details class="parking-toggle" id="parkingDetails">
         <summary>🚗 주차 위치 기록</summary>
-        <div class="car-select-row">
-          <button type="button" class="car-btn selected" id="carBtnBlack" data-car="검둥이"><svg class="car-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg> 검둥이</button>
-          <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이"><svg class="car-dot white" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4.5"/></svg> 흰둥이</button>
-        </div>
         <div class="parking-buttons">
           <button type="button" class="parking-btn loc-2" data-loc="지하2층"><span class="pk-icon">🅿️</span><span class="pk-label">지하2층</span></button>
           <button type="button" class="parking-btn loc-3" data-loc="지하3층"><span class="pk-icon">🅿️</span><span class="pk-label">지하3층</span></button>
@@ -1337,12 +1299,13 @@
     function renderParkingStatusForCar(car, status) {
       var el = document.getElementById('parkingStatus-' + CAR_DOM_ID[car]);
       if (!el) return;
+      var selectedClass = (car === selectedCar) ? ' selected' : '';
       if (!status) {
-        el.className = 'parking-status small empty';
+        el.className = 'parking-status small empty' + selectedClass;
         el.innerHTML = '<span class="car-label">' + CAR_EMOJI[car] + ' ' + escapeHtml(car) + '</span>기록 없음';
         return;
       }
-      el.className = 'parking-status small ' + (PARKING_CLASS[status.location] || 'loc-other');
+      el.className = 'parking-status small ' + (PARKING_CLASS[status.location] || 'loc-other') + selectedClass;
       el.innerHTML =
         '<span class="car-label">' + CAR_EMOJI[car] + ' ' + escapeHtml(car) + '</span>' +
         '<span class="loc">' + escapeHtml(status.location) + '</span>' +
@@ -1361,15 +1324,22 @@
         .catch(function () { renderAllParkingStatus(null); });
     }
 
-    document.getElementById('carBtnBlack').addEventListener('click', function () { selectCar('검둥이'); });
-    document.getElementById('carBtnWhite').addEventListener('click', function () { selectCar('흰둥이'); });
-
     function selectCar(car) {
       selectedCar = car;
-      document.querySelectorAll('.car-btn').forEach(function (b) {
-        b.classList.toggle('selected', b.getAttribute('data-car') === car);
+      CAR_LIST.forEach(function (c) {
+        var el = document.getElementById('parkingStatus-' + CAR_DOM_ID[c]);
+        if (el) el.classList.toggle('selected', c === car);
       });
     }
+
+    document.getElementById('parkingStatus-black').addEventListener('click', function () {
+      selectCar('검둥이');
+      document.getElementById('parkingDetails').open = true;
+    });
+    document.getElementById('parkingStatus-white').addEventListener('click', function () {
+      selectCar('흰둥이');
+      document.getElementById('parkingDetails').open = true;
+    });
 
     document.querySelectorAll('.parking-btn').forEach(function (btn) {
       btn.addEventListener('click', function () {
