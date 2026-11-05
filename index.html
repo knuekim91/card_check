@@ -222,21 +222,36 @@
       margin-bottom: 14px;
       box-shadow: var(--shadow-sm);
     }
-    section.panel.accent-parking { border-top-color: var(--accent-parking); }
-    section.panel.accent-category { border-top-color: var(--accent-category); }
-    section.panel.accent-form { border-top-color: var(--accent-form); }
-    section.panel.accent-expense { border-top-color: var(--accent-expense); }
-    section.panel.accent-stock { border-top-color: var(--accent-stock); }
-    section.panel.accent-manage { border-top-color: var(--accent-manage); }
+    section.panel.accent-parking { border-top-color: var(--accent-parking); --panel-accent: var(--accent-parking); }
+    section.panel.accent-category { border-top-color: var(--accent-category); --panel-accent: var(--accent-category); }
+    section.panel.accent-form { border-top-color: var(--accent-form); --panel-accent: var(--accent-form); }
+    section.panel.accent-expense { border-top-color: var(--accent-expense); --panel-accent: var(--accent-expense); }
+    section.panel.accent-stock { border-top-color: var(--accent-stock); --panel-accent: var(--accent-stock); }
+    section.panel.accent-manage { border-top-color: var(--accent-manage); --panel-accent: var(--accent-manage); }
     section.panel h2 {
       font-size: 15px;
       margin: 0 0 12px 0;
     }
     .section-title {
-      font-size: 13.5px;
-      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14.5px;
+      font-weight: 800;
       color: var(--text);
-      margin: 0 0 10px;
+      margin: 0 0 12px;
+    }
+    .section-title .title-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      font-size: 16px;
+      background: var(--panel-accent, var(--primary));
+      box-shadow: 0 3px 8px -2px var(--panel-accent, var(--primary));
+      flex-shrink: 0;
     }
     .weather-card {
       display: flex;
@@ -247,6 +262,7 @@
       background: linear-gradient(135deg, #38bdf8, #0284c7);
       color: #fff;
       margin-bottom: 14px;
+      box-shadow: 0 8px 20px -6px rgba(2,132,199,0.55);
     }
     .weather-card .icon { font-size: 40px; line-height: 1; flex-shrink: 0; }
     .weather-card .info { flex: 1; min-width: 0; }
@@ -303,7 +319,7 @@
       margin-bottom: 12px;
     }
     .car-btn {
-      padding: 10px 8px;
+      padding: 11px 8px;
       border: 2px solid var(--border);
       border-radius: 10px;
       background: var(--card-bg);
@@ -311,12 +327,17 @@
       font-size: 14px;
       font-weight: 700;
       cursor: pointer;
+      transition: transform 0.05s, box-shadow 0.15s;
     }
+    .car-btn:active { transform: scale(0.97); }
     .car-btn.selected {
       border-color: var(--primary);
-      background: var(--select-bg);
-      color: var(--primary);
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: #fff;
+      box-shadow: 0 6px 14px -4px rgba(37,99,235,0.55);
     }
+    .car-btn.selected .car-dot circle { fill: #fff; }
+    .car-btn.selected .car-dot.white circle { fill: #fff; stroke: rgba(255,255,255,0.6); }
     .car-btn {
       display: inline-flex;
       align-items: center;
@@ -337,19 +358,26 @@
       margin-bottom: 14px;
     }
     .parking-btn {
-      padding: 18px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      padding: 16px 8px;
       border: none;
       border-radius: 12px;
-      font-size: 17px;
+      font-size: 15.5px;
       font-weight: 800;
       cursor: pointer;
-      transition: transform 0.05s;
+      transition: transform 0.05s, box-shadow 0.15s;
+      box-shadow: 0 6px 14px -6px rgba(15,23,42,0.35);
     }
-    .parking-btn:active { transform: scale(0.96); }
-    .parking-btn.loc-2 { background: #dbeafe; color: #1d4ed8; }
-    .parking-btn.loc-3 { background: #dcfce7; color: #15803d; }
-    .parking-btn.loc-4 { background: #fef3c7; color: #b45309; }
-    .parking-btn.loc-other { background: #f3e8ff; color: #7e22ce; }
+    .parking-btn:active { transform: scale(0.96); box-shadow: 0 2px 6px -3px rgba(15,23,42,0.35); }
+    .parking-btn .pk-icon { font-size: 22px; line-height: 1; }
+    .parking-btn.loc-2 { background: linear-gradient(135deg, #60a5fa, #1d4ed8); color: #fff; }
+    .parking-btn.loc-3 { background: linear-gradient(135deg, #4ade80, #15803d); color: #fff; }
+    .parking-btn.loc-4 { background: linear-gradient(135deg, #fbbf24, #b45309); color: #fff; }
+    .parking-btn.loc-other { background: linear-gradient(135deg, #c084fc, #7e22ce); color: #fff; }
     .parking-status {
       text-align: center;
       padding: 22px 16px;
@@ -357,6 +385,7 @@
       font-size: 17px;
       font-weight: 700;
       color: #fff;
+      box-shadow: 0 8px 18px -6px rgba(15,23,42,0.4);
     }
     .parking-status .loc {
       display: block;
@@ -832,7 +861,7 @@
 
   <div class="container">
     <section class="panel accent-parking">
-      <h3 class="section-title">🚘 우리집 차량 관리</h3>
+      <h3 class="section-title"><span class="title-icon">🚘</span> 우리집 차량 관리</h3>
       <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
       <details class="parking-toggle" id="parkingDetails">
         <summary><span id="parkingSummaryLabel">🚗 주차 위치 기록</span></summary>
@@ -841,10 +870,10 @@
           <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이"><svg class="car-dot white" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4.5"/></svg> 흰둥이</button>
         </div>
         <div class="parking-buttons">
-          <button type="button" class="parking-btn loc-2" data-loc="지하2층">지하2층</button>
-          <button type="button" class="parking-btn loc-3" data-loc="지하3층">지하3층</button>
-          <button type="button" class="parking-btn loc-4" data-loc="지하4층">지하4층</button>
-          <button type="button" class="parking-btn loc-other" data-loc="다른곳">다른곳</button>
+          <button type="button" class="parking-btn loc-2" data-loc="지하2층"><span class="pk-icon">🅿️</span><span class="pk-label">지하2층</span></button>
+          <button type="button" class="parking-btn loc-3" data-loc="지하3층"><span class="pk-icon">🅿️</span><span class="pk-label">지하3층</span></button>
+          <button type="button" class="parking-btn loc-4" data-loc="지하4층"><span class="pk-icon">🅿️</span><span class="pk-label">지하4층</span></button>
+          <button type="button" class="parking-btn loc-other" data-loc="다른곳"><span class="pk-icon">📍</span><span class="pk-label">다른곳</span></button>
         </div>
         <div class="parking-status-grid">
           <div class="parking-status small empty" id="parkingStatus-black">불러오는 중...</div>
