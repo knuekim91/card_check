@@ -49,15 +49,6 @@
         --accent-stock: #22d3ee;
         --accent-manage: #94a3b8;
       }
-      input[type=text], input[type=number], input[type=date], select {
-        background: #111827;
-      }
-      .add-card-row button {
-        background: #374151;
-      }
-      .loading-overlay {
-        background: rgba(17,24,39,0.7);
-      }
       .month-nav .period-label {
         color: #93c5fd;
       }
@@ -765,6 +756,17 @@
     .modal-body {
       padding: 8px 16px 16px;
       overflow-y: auto;
+    }
+    @media (prefers-color-scheme: dark) {
+      input[type=text], input[type=number], input[type=date], select {
+        background: #111827;
+      }
+      .add-card-row button {
+        background: #374151;
+      }
+      .loading-overlay {
+        background: rgba(17,24,39,0.7);
+      }
     }
   </style>
 </head>
