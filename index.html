@@ -986,7 +986,6 @@
     var CARD_COLORS = ['#2563eb', '#059669', '#d97706', '#db2777', '#7c3aed', '#0891b2', '#dc2626', '#65a30d', '#ea580c', '#475569'];
     var lastFocusedEl = null;
     var modalHistoryActive = false;
-    var exitGuardArmed = false;
     var PARKING_CLASS = { '지하2층': 'loc-2', '지하3층': 'loc-3', '지하4층': 'loc-4', '다른곳': 'loc-other' };
     var CAR_LIST = ['검둥이', '흰둥이'];
     var CAR_DOM_ID = { '검둥이': 'black', '흰둥이': 'white' };
@@ -1512,22 +1511,36 @@
     document.getElementById('categoryModal').addEventListener('click', function (ev) {
       if (ev.target === this) closeCategoryModal();
     });
+    var exitRearmTimer = null;
     function armExitGuard() {
-      exitGuardArmed = true;
       history.pushState({ exitGuard: true }, '');
     }
     armExitGuard();
 
+    function showExitToast() {
+      var toast = document.getElementById('exitToast');
+      if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'exitToast';
+        toast.style.cssText = 'position:fixed;left:50%;bottom:28px;transform:translateX(-50%);' +
+          'background:rgba(31,41,55,0.92);color:#fff;font-size:13.5px;padding:10px 18px;' +
+          'border-radius:999px;box-shadow:0 6px 18px rgba(0,0,0,0.25);z-index:9999;' +
+          'opacity:0;transition:opacity 0.2s;pointer-events:none;white-space:nowrap;';
+        document.body.appendChild(toast);
+      }
+      toast.textContent = '뒤로가기를 한 번 더 누르면 종료됩니다';
+      requestAnimationFrame(function () { toast.style.opacity = '1'; });
+      clearTimeout(toast._hideTimer);
+      toast._hideTimer = setTimeout(function () { toast.style.opacity = '0'; }, 1600);
+    }
+
     window.addEventListener('popstate', function () {
       if (modalHistoryActive) { closeCategoryModal(true); return; }
-      if (exitGuardArmed) {
-        exitGuardArmed = false;
-        if (confirm('우리가족 카드 사용 현황 앱을 종료할까요?')) {
-          window.close();
-        } else {
-          armExitGuard();
-        }
-      }
+      // exitGuard 버퍼가 막 소비됨: 바로 재적립하지 않고 안내만 띄움.
+      // 이 상태에서 다시 뒤로가기를 누르면 더 쌓인 기록이 없어 그대로 앱이 종료됨.
+      showExitToast();
+      clearTimeout(exitRearmTimer);
+      exitRearmTimer = setTimeout(armExitGuard, 2000);
     });
 
     document.getElementById('filterClear').addEventListener('click', function () {
