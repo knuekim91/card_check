@@ -236,8 +236,8 @@
     .section-title {
       display: flex;
       align-items: center;
-      gap: 8px;
-      font-size: 14.5px;
+      gap: 9px;
+      font-size: 17.5px;
       font-weight: 800;
       color: var(--text);
       margin: 0 0 12px;
@@ -246,10 +246,10 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 30px;
-      height: 30px;
-      border-radius: 9px;
-      font-size: 16px;
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      font-size: 18px;
       background: var(--panel-accent, var(--primary));
       box-shadow: 0 3px 8px -2px var(--panel-accent, var(--primary));
       flex-shrink: 0;
@@ -324,6 +324,8 @@
       border: 2px solid var(--border);
       border-radius: 10px;
       background: var(--card-bg);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       color: var(--text-sub);
       font-size: 14px;
       font-weight: 700;
@@ -332,8 +334,8 @@
     }
     .car-btn:active { transform: scale(0.97); }
     .car-btn.selected {
-      border-color: var(--primary);
-      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      border-color: rgba(255,255,255,0.4);
+      background: linear-gradient(135deg, rgba(96,165,250,0.5), rgba(59,130,246,0.6));
       color: #fff;
       box-shadow: 0 6px 14px -4px rgba(37,99,235,0.55);
     }
@@ -365,20 +367,22 @@
       justify-content: center;
       gap: 4px;
       padding: 16px 8px;
-      border: none;
+      border: 1px solid rgba(255,255,255,0.3);
       border-radius: 12px;
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       font-size: 15.5px;
       font-weight: 800;
       cursor: pointer;
       transition: transform 0.05s, box-shadow 0.15s;
-      box-shadow: 0 6px 14px -6px rgba(15,23,42,0.35);
+      box-shadow: 0 6px 14px -6px rgba(15,23,42,0.4);
     }
-    .parking-btn:active { transform: scale(0.96); box-shadow: 0 2px 6px -3px rgba(15,23,42,0.35); }
+    .parking-btn:active { transform: scale(0.96); box-shadow: 0 2px 6px -3px rgba(15,23,42,0.4); }
     .parking-btn .pk-icon { font-size: 22px; line-height: 1; }
-    .parking-btn.loc-2 { background: linear-gradient(135deg, #60a5fa, #1d4ed8); color: #fff; }
-    .parking-btn.loc-3 { background: linear-gradient(135deg, #4ade80, #15803d); color: #fff; }
-    .parking-btn.loc-4 { background: linear-gradient(135deg, #fbbf24, #b45309); color: #fff; }
-    .parking-btn.loc-other { background: linear-gradient(135deg, #c084fc, #7e22ce); color: #fff; }
+    .parking-btn.loc-2 { background: linear-gradient(135deg, rgba(96,165,250,0.45), rgba(29,78,216,0.55)); color: #fff; }
+    .parking-btn.loc-3 { background: linear-gradient(135deg, rgba(74,222,128,0.4), rgba(21,128,61,0.55)); color: #fff; }
+    .parking-btn.loc-4 { background: linear-gradient(135deg, rgba(251,191,36,0.4), rgba(180,83,9,0.55)); color: #fff; }
+    .parking-btn.loc-other { background: linear-gradient(135deg, rgba(192,132,252,0.4), rgba(126,34,206,0.55)); color: #fff; }
     .parking-status {
       text-align: center;
       padding: 22px 16px;
@@ -552,8 +556,8 @@
       gap: 8px;
       width: 100%;
       background: var(--select-bg);
-      color: var(--primary-dark);
-      border: 1px dashed var(--primary);
+      color: #fbbf24;
+      border: 1px dashed #fbbf24;
       border-radius: 10px;
       padding: 12px;
       font-size: 14.5px;
@@ -562,7 +566,7 @@
       margin-bottom: 14px;
       min-height: 44px;
     }
-    .receipt-btn:active { background: var(--primary); color: #fff; }
+    .receipt-btn:active { background: #fbbf24; color: #1f2937; }
     .receipt-raw {
       margin: -4px 0 14px;
     }
