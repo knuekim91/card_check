@@ -557,6 +557,23 @@ function getStockInfo() {
   }
 }
 
+// 영수증 인식(Drive 권한)을 처음 쓰기 전, Apps Script 편집기에서 이 함수를
+// 딱 한 번 직접 선택해서 ▶ 실행 버튼으로 실행해주세요. 권한 승인 창이 뜨면
+// 승인하면 됩니다("Google에서 확인하지 않은 앱" 경고가 뜨면 고급 > 이동을 누르세요).
+// 실행 로그에 "Drive 권한 승인 완료"가 보이면 성공입니다.
+function authorizeDriveForReceipts_() {
+  var blob = Utilities.newBlob('권한 승인 테스트', 'text/plain', 'authorize-test.txt');
+  var fileName = 'authorize-test-' + new Date().getTime();
+  var docId;
+  if (typeof Drive.Files.insert === 'function') {
+    docId = Drive.Files.insert({ title: fileName, mimeType: 'application/vnd.google-apps.document' }, blob, { ocr: true, ocrLanguage: 'ko' }).id;
+  } else {
+    docId = Drive.Files.create({ name: fileName, mimeType: 'application/vnd.google-apps.document' }, blob, { ocrLanguage: 'ko' }).id;
+  }
+  DriveApp.getFileById(docId).setTrashed(true);
+  Logger.log('Drive 권한 승인 완료');
+}
+
 // 영수증 사진을 구글 드라이브의 무료 OCR(이미지 -> 구글 문서 변환)로 글자를 읽어
 // 날짜/금액/상호명을 추정합니다. 정확도가 완벽하지 않으므로 프런트에서는
 // 항상 사용자가 결과를 확인/수정한 뒤 저장하도록 되어 있습니다.
