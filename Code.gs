@@ -562,7 +562,7 @@ function getStockInfo() {
 // 항상 사용자가 결과를 확인/수정한 뒤 저장하도록 되어 있습니다.
 // 사전 준비: Apps Script 편집기 왼쪽 "서비스"(+) 에서 "Drive API"를 추가해야 합니다.
 function scanReceipt(base64Image) {
-  if (typeof Drive === 'undefined') {
+  if (typeof Drive === 'undefined' || !Drive.Files) {
     throw new Error('영수증 인식 기능을 쓰려면 Apps Script 편집기에서 서비스(+) > Drive API를 추가해야 합니다.');
   }
   var m = String(base64Image).match(/^data:(image\/[a-zA-Z0-9.+-]+);base64,(.*)$/);
@@ -570,18 +570,26 @@ function scanReceipt(base64Image) {
   var data = m ? m[2] : base64Image;
   var bytes = Utilities.base64Decode(data);
   var blob = Utilities.newBlob(bytes, mimeType, 'receipt.jpg');
+  var fileName = 'receipt-ocr-' + new Date().getTime();
 
-  var resource = {
-    title: 'receipt-ocr-' + new Date().getTime(),
-    mimeType: 'application/vnd.google-apps.document'
-  };
-  var file = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ko' });
-  var docId = file.id;
+  var docId;
+  if (typeof Drive.Files.insert === 'function') {
+    // 서비스로 추가된 Drive API가 v2인 경우
+    var resourceV2 = { title: fileName, mimeType: 'application/vnd.google-apps.document' };
+    docId = Drive.Files.insert(resourceV2, blob, { ocr: true, ocrLanguage: 'ko' }).id;
+  } else if (typeof Drive.Files.create === 'function') {
+    // 서비스로 추가된 Drive API가 v3인 경우(최근 기본값)
+    var resourceV3 = { name: fileName, mimeType: 'application/vnd.google-apps.document' };
+    docId = Drive.Files.create(resourceV3, blob, { ocrLanguage: 'ko' }).id;
+  } else {
+    throw new Error('Drive API 서비스를 인식할 수 없습니다. 서비스 목록에서 Drive API가 추가돼 있는지 확인해주세요.');
+  }
+
   var text = '';
   try {
     text = DocumentApp.openById(docId).getBody().getText();
   } finally {
-    try { Drive.Files.remove(docId); } catch (cleanupErr) { /* 정리 실패는 무시 */ }
+    try { DriveApp.getFileById(docId).setTrashed(true); } catch (cleanupErr) { /* 정리 실패는 무시 */ }
   }
 
   return parseReceiptText_(text);
