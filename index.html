@@ -387,6 +387,9 @@
       text-align: center;
       padding: 22px 16px;
       border-radius: var(--radius);
+      border: 1px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
       font-size: 17px;
       font-weight: 700;
       color: #fff;
@@ -414,6 +417,7 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+      margin-bottom: 14px;
     }
     .parking-status.small {
       padding: 14px 8px;
@@ -433,10 +437,10 @@
     .parking-status.small .time {
       font-size: 10.5px;
     }
-    .parking-status.loc-2 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
-    .parking-status.loc-3 { background: linear-gradient(135deg, #22c55e, #15803d); }
-    .parking-status.loc-4 { background: linear-gradient(135deg, #f59e0b, #b45309); }
-    .parking-status.loc-other { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+    .parking-status.loc-2 { background: linear-gradient(135deg, rgba(96,165,250,0.45), rgba(29,78,216,0.55)); }
+    .parking-status.loc-3 { background: linear-gradient(135deg, rgba(74,222,128,0.4), rgba(21,128,61,0.55)); }
+    .parking-status.loc-4 { background: linear-gradient(135deg, rgba(251,191,36,0.4), rgba(180,83,9,0.55)); }
+    .parking-status.loc-other { background: linear-gradient(135deg, rgba(192,132,252,0.4), rgba(126,34,206,0.55)); }
     .category-bars {
       display: flex;
       flex-direction: column;
@@ -861,8 +865,12 @@
     <section class="panel accent-parking">
       <h3 class="section-title"><span class="title-icon">🚘</span> 우리집 차량 관리</h3>
       <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
+      <div class="parking-status-grid">
+        <div class="parking-status small empty" id="parkingStatus-black">불러오는 중...</div>
+        <div class="parking-status small empty" id="parkingStatus-white">불러오는 중...</div>
+      </div>
       <details class="parking-toggle" id="parkingDetails">
-        <summary><span id="parkingSummaryLabel">🚗 주차 위치 기록</span></summary>
+        <summary>🚗 주차 위치 기록</summary>
         <div class="car-select-row">
           <button type="button" class="car-btn selected" id="carBtnBlack" data-car="검둥이"><svg class="car-dot" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="5"/></svg> 검둥이</button>
           <button type="button" class="car-btn" id="carBtnWhite" data-car="흰둥이"><svg class="car-dot white" viewBox="0 0 10 10" aria-hidden="true" focusable="false"><circle cx="5" cy="5" r="4.5"/></svg> 흰둥이</button>
@@ -872,10 +880,6 @@
           <button type="button" class="parking-btn loc-3" data-loc="지하3층"><span class="pk-icon">🅿️</span><span class="pk-label">지하3층</span></button>
           <button type="button" class="parking-btn loc-4" data-loc="지하4층"><span class="pk-icon">🅿️</span><span class="pk-label">지하4층</span></button>
           <button type="button" class="parking-btn loc-other" data-loc="다른곳"><span class="pk-icon">📍</span><span class="pk-label">다른곳</span></button>
-        </div>
-        <div class="parking-status-grid">
-          <div class="parking-status small empty" id="parkingStatus-black">불러오는 중...</div>
-          <div class="parking-status small empty" id="parkingStatus-white">불러오는 중...</div>
         </div>
       </details>
     </section>
@@ -1345,26 +1349,10 @@
         '<span class="time">' + escapeHtml(status.recordedAtLabel) + '</span>';
     }
 
-    function renderParkingSummary(statusMap) {
-      var summaryLabel = document.getElementById('parkingSummaryLabel');
-      if (!summaryLabel) return;
-      if (!statusMap) {
-        summaryLabel.textContent = '🚗 주차 위치 기록';
-        return;
-      }
-      var lines = CAR_LIST.map(function (car) {
-        var s = statusMap[car];
-        var text = car + ' : ' + (s ? (s.location + ' - ' + s.recordedAtLabel) : '기록 없음');
-        return CAR_EMOJI[car] + ' ' + escapeHtml(text);
-      });
-      summaryLabel.innerHTML = lines.join('<br>');
-    }
-
     function renderAllParkingStatus(statusMap) {
       CAR_LIST.forEach(function (car) {
         renderParkingStatusForCar(car, statusMap ? statusMap[car] : null);
       });
-      renderParkingSummary(statusMap);
     }
 
     function loadParkingStatus() {
