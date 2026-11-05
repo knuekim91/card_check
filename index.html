@@ -264,7 +264,10 @@
       color: #fff;
       margin-bottom: 14px;
       box-shadow: 0 8px 20px -6px rgba(2,132,199,0.55);
+      cursor: pointer;
+      transition: transform 0.05s;
     }
+    .weather-card:active { transform: scale(0.98); }
     .weather-card .icon { font-size: 40px; line-height: 1; flex-shrink: 0; }
     .weather-card .info { flex: 1; min-width: 0; }
     .weather-card .temp { font-size: 20px; font-weight: 800; }
@@ -1379,6 +1382,11 @@
         }
         recordParkingLocation(loc);
       });
+    });
+
+    var WEATHER_SOURCE_URL = 'https://open-meteo.com/en/docs?latitude=35.8714&longitude=128.6014';
+    document.getElementById('weatherCard').addEventListener('click', function () {
+      window.open(WEATHER_SOURCE_URL, '_blank', 'noopener');
     });
 
     function renderWeather(info) {
