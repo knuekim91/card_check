@@ -479,7 +479,7 @@ function setParkingLocation(location, car) {
 function getWeatherInfo() {
   try {
     var url = 'https://api.open-meteo.com/v1/forecast?latitude=' + WEATHER_LAT + '&longitude=' + WEATHER_LON +
-      '&current=temperature_2m,weather_code&daily=precipitation_probability_max&timezone=Asia%2FSeoul';
+      '&current=temperature_2m,weather_code&daily=precipitation_probability_max,temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul';
     var res = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
     Logger.log('날씨 응답 코드: ' + res.getResponseCode());
     if (res.getResponseCode() !== 200) {
@@ -491,11 +491,15 @@ function getWeatherInfo() {
     var code = data.current.weather_code;
     var temp = Math.round(data.current.temperature_2m);
     var pop = data.daily.precipitation_probability_max[0];
+    var tomorrowMax = data.daily.temperature_2m_max.length > 1 ? Math.round(data.daily.temperature_2m_max[1]) : null;
+    var tomorrowMin = data.daily.temperature_2m_min.length > 1 ? Math.round(data.daily.temperature_2m_min[1]) : null;
     var meta = WEATHER_CODE_MAP[code] || { icon: '🌡️', label: '' };
     var message = weatherMessage_(code);
     return {
       tempC: temp,
       precipProbability: pop,
+      tomorrowMin: tomorrowMin,
+      tomorrowMax: tomorrowMax,
       icon: meta.icon,
       label: meta.label,
       message: message

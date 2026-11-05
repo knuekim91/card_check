@@ -264,13 +264,11 @@
       color: #fff;
       margin-bottom: 14px;
       box-shadow: 0 8px 20px -6px rgba(2,132,199,0.55);
-      cursor: pointer;
-      transition: transform 0.05s;
     }
-    .weather-card:active { transform: scale(0.98); }
     .weather-card .icon { font-size: 40px; line-height: 1; flex-shrink: 0; }
     .weather-card .info { flex: 1; min-width: 0; }
     .weather-card .temp { font-size: 20px; font-weight: 800; }
+    .weather-card .tomorrow { font-size: 12.5px; font-weight: 600; opacity: 0.85; margin-left: 2px; }
     .weather-card .desc { font-size: 12.5px; opacity: 0.9; margin-top: 2px; }
     .weather-card .msg { font-size: 13px; font-weight: 600; margin-top: 6px; }
     .weather-card.empty {
@@ -1384,11 +1382,6 @@
       });
     });
 
-    var WEATHER_SOURCE_URL = 'https://open-meteo.com/en/docs?latitude=35.8714&longitude=128.6014';
-    document.getElementById('weatherCard').addEventListener('click', function () {
-      window.open(WEATHER_SOURCE_URL, '_blank', 'noopener');
-    });
-
     function renderWeather(info) {
       var el = document.getElementById('weatherCard');
       if (!info) {
@@ -1397,10 +1390,13 @@
         return;
       }
       el.className = 'weather-card';
+      var tomorrow = (info.tomorrowMin != null && info.tomorrowMax != null)
+        ? ' <span class="tomorrow">내일 (' + info.tomorrowMin + '° / ' + info.tomorrowMax + '°)</span>'
+        : '';
       el.innerHTML =
         '<div class="icon">' + info.icon + '</div>' +
         '<div class="info">' +
-          '<div class="temp">' + info.tempC + '°C · ' + escapeHtml(info.label) + '</div>' +
+          '<div class="temp">' + info.tempC + '°C · ' + escapeHtml(info.label) + tomorrow + '</div>' +
           '<div class="desc">오늘 강수확률 ' + info.precipProbability + '%</div>' +
           '<div class="msg">' + escapeHtml(info.message) + '</div>' +
         '</div>';
