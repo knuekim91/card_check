@@ -329,8 +329,8 @@
       padding: 16px 8px;
       border: 1px solid rgba(255,255,255,0.3);
       border-radius: 12px;
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       font-size: 15.5px;
       font-weight: 800;
       cursor: pointer;
@@ -348,8 +348,8 @@
       padding: 22px 16px;
       border-radius: var(--radius);
       border: 1px solid rgba(255,255,255,0.3);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
       font-size: 17px;
       font-weight: 700;
       color: #fff;
@@ -833,6 +833,195 @@
       padding: 8px 16px 16px;
       overflow-y: auto;
     }
+
+    /* ===== 테마 전환기 ===== */
+    .theme-switch {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 2px 12px;
+      margin-bottom: 4px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .theme-switch::-webkit-scrollbar { display: none; }
+    .theme-btn {
+      flex-shrink: 0;
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text-sub);
+      font-size: 12.5px;
+      font-weight: 700;
+      padding: 8px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .theme-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+
+    /* ===== 대체 테마: 벤토 그리드 / 미니멀 / 비비드 ===== */
+    html[data-app-theme="bento"] {
+      --bg: #eef1f6;
+      --card-bg: #ffffff;
+      --border: #e4e7ee;
+      --text: #1c2230;
+      --text-sub: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --danger-bg: #fef2f2;
+      --select-bg: #eff6ff;
+      --radius: 22px;
+      --glass-blur: 0px;
+      --shadow-sm: 0 2px 8px rgba(15,23,42,0.07);
+      --shadow-md: 0 16px 36px -12px rgba(15,23,42,0.16);
+      --accent-parking: #059669;
+      --accent-category: #7c3aed;
+      --accent-form: #2563eb;
+      --accent-expense: #d97706;
+      --accent-stock: #0891b2;
+      --accent-manage: #64748b;
+    }
+    html[data-app-theme="minimal"] {
+      --bg: #fafafa;
+      --card-bg: #ffffff;
+      --border: #d4d4d8;
+      --text: #18181b;
+      --text-sub: #71717a;
+      --primary: #18181b;
+      --primary-dark: #000000;
+      --danger: #b91c1c;
+      --danger-bg: #fef2f2;
+      --select-bg: #f4f4f5;
+      --radius: 8px;
+      --glass-blur: 0px;
+      --shadow-sm: none;
+      --shadow-md: 0 1px 2px rgba(0,0,0,0.06);
+      --accent-parking: #18181b;
+      --accent-category: #18181b;
+      --accent-form: #18181b;
+      --accent-expense: #18181b;
+      --accent-stock: #18181b;
+      --accent-manage: #18181b;
+    }
+    html[data-app-theme="vibrant"] {
+      --bg: #15082e;
+      --card-bg: #1e0f45;
+      --border: #BF00FF;
+      --text: #ffffff;
+      --text-sub: #d8b4fe;
+      --primary: #00FFFF;
+      --primary-dark: #0891b2;
+      --danger: #FF1493;
+      --danger-bg: rgba(255,20,147,0.15);
+      --select-bg: rgba(0,255,255,0.12);
+      --radius: 16px;
+      --glass-blur: 0px;
+      --shadow-sm: 4px 4px 0 #39FF14;
+      --shadow-md: 6px 6px 0 #39FF14;
+      --accent-parking: #39FF14;
+      --accent-category: #BF00FF;
+      --accent-form: #00FFFF;
+      --accent-expense: #FFAA00;
+      --accent-stock: #FF1493;
+      --accent-manage: #d8b4fe;
+    }
+
+    html[data-app-theme="bento"] body,
+    html[data-app-theme="minimal"] body,
+    html[data-app-theme="vibrant"] body {
+      background: var(--bg);
+      background-attachment: scroll;
+    }
+    html[data-app-theme="bento"] .parking-btn,
+    html[data-app-theme="minimal"] .parking-btn,
+    html[data-app-theme="vibrant"] .parking-btn,
+    html[data-app-theme="bento"] .parking-status,
+    html[data-app-theme="minimal"] .parking-status,
+    html[data-app-theme="vibrant"] .parking-status {
+      border-color: var(--border);
+    }
+    html[data-app-theme="bento"] .car-btn.selected,
+    html[data-app-theme="minimal"] .car-btn.selected,
+    html[data-app-theme="vibrant"] .car-btn.selected {
+      border-color: #fbbf24;
+    }
+    html[data-app-theme="bento"] .total-card,
+    html[data-app-theme="minimal"] .total-card,
+    html[data-app-theme="vibrant"] .total-card {
+      border-color: rgba(0,0,0,0.08);
+    }
+
+    /* 벤토 그리드: 애플 스타일 모듈형 카드 + 큰 라운드 + 원래 쓰던 또렷한 단색 그라데이션 */
+    html[data-app-theme="bento"] .month-nav .period-label { color: var(--primary-dark); }
+    html[data-app-theme="bento"] header h1 .title-grad {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    html[data-app-theme="bento"] .parking-btn.loc-2 { background: linear-gradient(135deg, #60a5fa, #1d4ed8); }
+    html[data-app-theme="bento"] .parking-btn.loc-3 { background: linear-gradient(135deg, #4ade80, #15803d); }
+    html[data-app-theme="bento"] .parking-btn.loc-4 { background: linear-gradient(135deg, #fbbf24, #b45309); }
+    html[data-app-theme="bento"] .parking-btn.loc-other { background: linear-gradient(135deg, #c084fc, #7e22ce); }
+    html[data-app-theme="bento"] .parking-status.loc-2 { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    html[data-app-theme="bento"] .parking-status.loc-3 { background: linear-gradient(135deg, #22c55e, #15803d); }
+    html[data-app-theme="bento"] .parking-status.loc-4 { background: linear-gradient(135deg, #f59e0b, #b45309); }
+    html[data-app-theme="bento"] .parking-status.loc-other { background: linear-gradient(135deg, #a855f7, #7e22ce); }
+    html[data-app-theme="bento"] .car-btn.selected { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); }
+
+    /* 미니멀/스위스: 모노톤, 장식 그라데이션 제거, 각진 모서리 */
+    html[data-app-theme="minimal"] .month-nav .period-label { color: var(--primary-dark); }
+    html[data-app-theme="minimal"] header h1 .title-grad {
+      background: none;
+      -webkit-text-fill-color: var(--text);
+      color: var(--text);
+    }
+    html[data-app-theme="minimal"] .weather-card { background: #27272a; }
+    html[data-app-theme="minimal"] .total-card { background: #18181b; box-shadow: none; }
+    html[data-app-theme="minimal"] .parking-btn.loc-2 { background: #3b5bdb; }
+    html[data-app-theme="minimal"] .parking-btn.loc-3 { background: #2b8a3e; }
+    html[data-app-theme="minimal"] .parking-btn.loc-4 { background: #d9480f; }
+    html[data-app-theme="minimal"] .parking-btn.loc-other { background: #6741d9; }
+    html[data-app-theme="minimal"] .parking-status.loc-2 { background: #3b5bdb; }
+    html[data-app-theme="minimal"] .parking-status.loc-3 { background: #2b8a3e; }
+    html[data-app-theme="minimal"] .parking-status.loc-4 { background: #d9480f; }
+    html[data-app-theme="minimal"] .parking-status.loc-other { background: #6741d9; }
+    html[data-app-theme="minimal"] .car-btn.selected { background: var(--primary); }
+    html[data-app-theme="minimal"] section.panel,
+    html[data-app-theme="minimal"] .card-summary,
+    html[data-app-theme="minimal"] .summary-group,
+    html[data-app-theme="minimal"] .modal-card {
+      box-shadow: none;
+    }
+
+    /* 비비드 & 블록: 네온 컬러 + 두꺼운 외곽선 + 하드 섀도우(블러 없는 오프셋 그림자) */
+    html[data-app-theme="vibrant"] header h1 .title-grad {
+      background: linear-gradient(135deg, #ffffff, #00FFFF);
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    html[data-app-theme="vibrant"] button.primary { color: #0b0f18; }
+    html[data-app-theme="vibrant"] section.panel,
+    html[data-app-theme="vibrant"] .card-summary,
+    html[data-app-theme="vibrant"] .total-card,
+    html[data-app-theme="vibrant"] .weather-card,
+    html[data-app-theme="vibrant"] .summary-group {
+      border-width: 2px;
+      box-shadow: var(--shadow-sm);
+    }
+    html[data-app-theme="vibrant"] .parking-btn.loc-2 { background: linear-gradient(135deg, #00FFFF, #0891b2); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-btn.loc-3 { background: linear-gradient(135deg, #39FF14, #15803d); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-btn.loc-4 { background: linear-gradient(135deg, #FFAA00, #b45309); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-btn.loc-other { background: linear-gradient(135deg, #BF00FF, #7e22ce); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-status.loc-2 { background: linear-gradient(135deg, #00FFFF, #0891b2); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-status.loc-3 { background: linear-gradient(135deg, #39FF14, #15803d); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-status.loc-4 { background: linear-gradient(135deg, #FFAA00, #b45309); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .parking-status.loc-other { background: linear-gradient(135deg, #BF00FF, #7e22ce); border: 2px solid #fff; }
+    html[data-app-theme="vibrant"] .car-btn.selected { background: linear-gradient(135deg, #00FFFF, #BF00FF); }
   </style>
 </head>
 <body>
@@ -841,6 +1030,12 @@
   </header>
 
   <div class="container">
+    <div class="theme-switch" id="themeSwitch">
+      <button type="button" class="theme-btn" data-theme="glass">글래스모피즘</button>
+      <button type="button" class="theme-btn" data-theme="bento">벤토 그리드</button>
+      <button type="button" class="theme-btn" data-theme="minimal">미니멀</button>
+      <button type="button" class="theme-btn" data-theme="vibrant">비비드</button>
+    </div>
     <section class="panel accent-parking">
       <h3 class="section-title"><span class="title-icon">🚘</span> 우리집 차량 관리</h3>
       <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
@@ -962,7 +1157,7 @@
 
     <footer class="app-footer">
       v1.1.0 · 2026.11.05 업데이트
-      <div class="design-name">Design: Glassmorphism</div>
+      <div class="design-name" id="designNameLabel">Design: Glassmorphism</div>
     </footer>
   </div>
 
@@ -982,6 +1177,35 @@
   </div>
 
   <script>
+    var THEME_NAMES = { glass: 'Glassmorphism', bento: 'Bento Grid', minimal: 'Minimalism & Swiss', vibrant: 'Vibrant & Block' };
+
+    function applyAppTheme(name) {
+      if (!THEME_NAMES[name]) name = 'glass';
+      if (name === 'glass') {
+        document.documentElement.removeAttribute('data-app-theme');
+      } else {
+        document.documentElement.setAttribute('data-app-theme', name);
+      }
+      document.querySelectorAll('.theme-btn').forEach(function (btn) {
+        btn.classList.toggle('active', btn.getAttribute('data-theme') === name);
+      });
+      var label = document.getElementById('designNameLabel');
+      if (label) label.textContent = 'Design: ' + THEME_NAMES[name];
+      try { localStorage.setItem('cardCheckTheme', name); } catch (e) {}
+    }
+
+    (function initTheme() {
+      var saved = 'glass';
+      try { saved = localStorage.getItem('cardCheckTheme') || 'glass'; } catch (e) {}
+      applyAppTheme(saved);
+    })();
+
+    document.querySelectorAll('.theme-btn').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        applyAppTheme(btn.getAttribute('data-theme'));
+      });
+    });
+
     var API_URL = 'https://script.google.com/macros/s/AKfycbzFC0_S1LBaKLJNULCRzImiW12yRE-91nSzRqUWKBCBYjp95jkFLbr6krwDKmM4TyH-/exec';
 
     function callApi(action, params) {
