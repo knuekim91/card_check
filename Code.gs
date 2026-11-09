@@ -636,9 +636,10 @@ function parseReceiptText_(text) {
     .filter(function (l) { return l; });
 
   var dateISO = null;
-  var dateRe = /(20\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/;
+  var dateRe4 = /(20\d{2})\s*[.\-\/년]\s*(\d{1,2})\s*[.\-\/월]\s*(\d{1,2})/;
+  var dateRe2 = /(?:^|[^0-9])(\d{2})\s*[.\-\/]\s*(\d{1,2})\s*[.\-\/]\s*(\d{1,2})(?:[^0-9]|$)/;
   for (var i = 0; i < lines.length; i++) {
-    var dm = lines[i].match(dateRe);
+    var dm = lines[i].match(dateRe4);
     if (dm) {
       var y = dm[1];
       var mo = ('0' + dm[2]).slice(-2);
@@ -647,16 +648,32 @@ function parseReceiptText_(text) {
       break;
     }
   }
+  if (!dateISO) {
+    // 2자리 연도(예: 26.11.08) 영수증용 보조 패턴. 월/일 범위를 검증해 오탐을 줄임.
+    for (var i2 = 0; i2 < lines.length; i2++) {
+      var dm2 = lines[i2].match(dateRe2);
+      if (dm2) {
+        var mo2 = parseInt(dm2[2], 10);
+        var d2 = parseInt(dm2[3], 10);
+        if (mo2 >= 1 && mo2 <= 12 && d2 >= 1 && d2 <= 31) {
+          dateISO = '20' + dm2[1] + '-' + ('0' + mo2).slice(-2) + '-' + ('0' + d2).slice(-2);
+          break;
+        }
+      }
+    }
+  }
 
   var amount = null;
-  var amountKeywords = ['합계', '총액', '받을금액', '결제금액', '승인금액', '청구금액', '카드금액', '합계금액'];
-  var numRe = /([0-9][0-9,]{2,})\s*원?/;
+  var amountKeywords = ['합계금액', '합계', '총액', '총금액', '받을금액', '받으실금액', '결제금액', '결제대상금액',
+    '승인금액', '청구금액', '카드금액', '카드승인금액', '판매금액', '지불금액'];
+  var numRe = /([0-9][0-9,\s]{1,}[0-9])\s*원?/;
   for (var j = 0; j < lines.length; j++) {
-    var hasKeyword = amountKeywords.some(function (k) { return lines[j].indexOf(k) !== -1; });
+    var compact = lines[j].replace(/\s+/g, '');
+    var hasKeyword = amountKeywords.some(function (k) { return compact.indexOf(k) !== -1; });
     if (hasKeyword) {
       var nm = lines[j].match(numRe);
       if (nm) {
-        var n = parseInt(nm[1].replace(/,/g, ''), 10);
+        var n = parseInt(nm[1].replace(/[,\s]/g, ''), 10);
         if (n >= 100) { amount = n; break; }
       }
     }
@@ -669,7 +686,18 @@ function parseReceiptText_(text) {
     if (nums.length) amount = Math.max.apply(null, nums);
   }
 
-  var item = lines.length ? lines[0] : '';
+  var itemSkipRe = /^(영수증|매출전표|구매영수증|신용카드매출전표|현금영수증|고객용|가맹점용|사업자\s*등록번호|대표자|주소|전화|TEL|사업자번호|사업자|매장|지점)/;
+  var regNoRe = /\d{3}-\d{2}-\d{5}/;
+  var phoneRe = /\d{2,4}-\d{3,4}-\d{4}/;
+  var item = '';
+  for (var k = 0; k < lines.length; k++) {
+    var l = lines[k];
+    if (itemSkipRe.test(l) || regNoRe.test(l) || phoneRe.test(l)) continue;
+    if (/^[0-9\s.\-\/:원,]+$/.test(l)) continue;
+    item = l;
+    break;
+  }
+  if (!item) item = lines.length ? lines[0] : '';
 
   return {
     item: item,
