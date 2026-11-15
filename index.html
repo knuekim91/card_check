@@ -31,6 +31,7 @@
       --accent-expense: #fbbf24;
       --accent-stock: #22d3ee;
       --accent-manage: #cbd5e1;
+      --accent-shopping: #fb7185;
     }
     * { box-sizing: border-box; }
     body {
@@ -229,6 +230,7 @@
     section.panel.accent-expense { border-top-color: var(--accent-expense); --panel-accent: var(--accent-expense); }
     section.panel.accent-stock { border-top-color: var(--accent-stock); --panel-accent: var(--accent-stock); }
     section.panel.accent-manage { border-top-color: var(--accent-manage); --panel-accent: var(--accent-manage); }
+    section.panel.accent-shopping { border-top-color: var(--accent-shopping); --panel-accent: var(--accent-shopping); }
     section.panel h2 {
       font-size: 15px;
       margin: 0 0 12px 0;
@@ -834,6 +836,103 @@
       overflow-y: auto;
     }
 
+    /* ===== 장보기 메모 ===== */
+    .shopping-input-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .shopping-input-row input[type=text] { flex: 1; }
+    .mic-btn, .shopping-add-btn {
+      flex-shrink: 0;
+      width: 46px;
+      height: 46px;
+      border-radius: 10px;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .mic-btn {
+      background: var(--select-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .mic-btn[hidden] { display: none; }
+    .mic-btn.listening {
+      background: var(--accent-shopping);
+      color: #fff;
+      animation: micPulse 1s ease-in-out infinite;
+    }
+    @keyframes micPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(251,113,133,0.5); }
+      50% { box-shadow: 0 0 0 8px rgba(251,113,133,0); }
+    }
+    .shopping-add-btn {
+      background: var(--primary);
+      color: #fff;
+      font-weight: 800;
+      font-size: 22px;
+    }
+    .shopping-frequent {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .freq-chip {
+      appearance: none;
+      border: 1px dashed var(--accent-shopping);
+      background: var(--select-bg);
+      color: var(--text);
+      font-size: 12.5px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .freq-chip:active { transform: scale(0.96); }
+    .shopping-list { display: flex; flex-direction: column; }
+    .shopping-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 2px;
+      border-bottom: 1px dashed var(--border);
+    }
+    .shopping-item:last-child { border-bottom: none; }
+    .shopping-item input[type=checkbox] {
+      width: 22px;
+      height: 22px;
+      flex-shrink: 0;
+      accent-color: var(--accent-shopping);
+    }
+    .shopping-item-name { flex: 1; font-size: 15px; min-width: 0; word-break: break-word; color: var(--text); }
+    .shopping-item.checked .shopping-item-name { text-decoration: line-through; opacity: 0.5; }
+    .shopping-item .del-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      cursor: pointer;
+      min-width: 32px;
+      min-height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .shopping-item .del-btn:active { color: var(--danger); }
+    .shopping-footer-actions { display: flex; justify-content: flex-end; margin-top: 8px; }
+    .shopping-clear-btn {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      font-size: 12.5px;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
     /* ===== 테마 전환기 ===== */
     .theme-switch {
       display: flex;
@@ -885,6 +984,7 @@
       --accent-expense: #d97706;
       --accent-stock: #0891b2;
       --accent-manage: #64748b;
+      --accent-shopping: #db2777;
     }
     html[data-app-theme="minimal"] {
       --bg: #fafafa;
@@ -907,6 +1007,7 @@
       --accent-expense: #18181b;
       --accent-stock: #18181b;
       --accent-manage: #18181b;
+      --accent-shopping: #18181b;
     }
     html[data-app-theme="vibrant"] {
       --bg: #15082e;
@@ -929,6 +1030,7 @@
       --accent-expense: #FFAA00;
       --accent-stock: #FF1493;
       --accent-manage: #d8b4fe;
+      --accent-shopping: #FF1493;
     }
 
     html[data-app-theme="bento"] body,
@@ -1052,6 +1154,22 @@
           <button type="button" class="parking-btn loc-other" data-loc="다른곳"><span class="pk-icon">📍</span><span class="pk-label">다른곳</span></button>
         </div>
       </details>
+    </section>
+
+    <section class="panel accent-shopping">
+      <h3 class="section-title"><span class="title-icon">🛒</span> 장보기 메모</h3>
+      <div class="shopping-input-row">
+        <input type="text" id="shoppingInput" placeholder="살 물건 입력 (예: 우유)" maxlength="30">
+        <button type="button" class="mic-btn" id="shoppingMicBtn" aria-label="음성으로 입력" title="음성으로 입력">🎤</button>
+        <button type="button" class="shopping-add-btn" id="shoppingAddBtn" aria-label="추가">+</button>
+      </div>
+      <div class="shopping-frequent" id="shoppingFrequent"></div>
+      <div class="shopping-list" id="shoppingListWrap">
+        <div class="empty-state">불러오는 중...</div>
+      </div>
+      <div class="shopping-footer-actions" id="shoppingFooterActions" hidden>
+        <button type="button" class="shopping-clear-btn" id="shoppingClearBtn">완료 항목 지우기</button>
+      </div>
     </section>
 
     <div class="summary-group">
@@ -1900,10 +2018,127 @@
         });
     });
 
+    function renderShoppingList(data) {
+      var wrap = document.getElementById('shoppingListWrap');
+      var freqWrap = document.getElementById('shoppingFrequent');
+      var footer = document.getElementById('shoppingFooterActions');
+      var items = (data && data.items) || [];
+      var frequent = (data && data.frequent) || [];
+
+      if (!items.length) {
+        wrap.innerHTML = '<div class="empty-state">살 물건을 입력하거나 아래 자주 쓰는 물품을 눌러 추가해보세요.</div>';
+      } else {
+        wrap.innerHTML = items.map(function (it) {
+          return '<div class="shopping-item' + (it.checked ? ' checked' : '') + '">' +
+            '<input type="checkbox" data-id="' + it.id + '"' + (it.checked ? ' checked' : '') + '>' +
+            '<span class="shopping-item-name">' + escapeHtml(it.name) + '</span>' +
+            '<button type="button" class="del-btn" data-id="' + it.id + '" aria-label="삭제"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>' +
+            '</div>';
+        }).join('');
+      }
+
+      freqWrap.innerHTML = frequent.map(function (name) {
+        return '<button type="button" class="freq-chip" data-name="' + escapeHtml(name) + '">+ ' + escapeHtml(name) + '</button>';
+      }).join('');
+
+      footer.hidden = !items.some(function (it) { return it.checked; });
+
+      wrap.querySelectorAll('input[type=checkbox]').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          var id = cb.getAttribute('data-id');
+          callApi('toggleShoppingItem', [id, cb.checked])
+            .then(renderShoppingList)
+            .catch(function (err) { showToast(err.message); loadShoppingList(); });
+        });
+      });
+      wrap.querySelectorAll('.del-btn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var id = btn.getAttribute('data-id');
+          callApi('deleteShoppingItem', [id]).then(renderShoppingList).catch(function (err) { showToast(err.message); });
+        });
+      });
+      freqWrap.querySelectorAll('.freq-chip').forEach(function (chip) {
+        chip.addEventListener('click', function () {
+          callApi('addShoppingItem', [chip.getAttribute('data-name')])
+            .then(renderShoppingList)
+            .catch(function (err) { showToast(err.message); });
+        });
+      });
+    }
+
+    function loadShoppingList() {
+      callApi('getShoppingList', [])
+        .then(renderShoppingList)
+        .catch(function () {
+          document.getElementById('shoppingListWrap').innerHTML = '<div class="empty-state">목록을 불러오지 못했습니다.</div>';
+        });
+    }
+
+    function addShoppingItemFromInput() {
+      var input = document.getElementById('shoppingInput');
+      var name = input.value.trim();
+      if (!name) return;
+      input.value = '';
+      callApi('addShoppingItem', [name])
+        .then(function (data) {
+          renderShoppingList(data);
+          showToast('"' + name + '" 추가했어요.');
+        })
+        .catch(function (err) { showToast(err.message); });
+    }
+
+    document.getElementById('shoppingAddBtn').addEventListener('click', addShoppingItemFromInput);
+    document.getElementById('shoppingInput').addEventListener('keydown', function (ev) {
+      if (ev.key === 'Enter') { ev.preventDefault(); addShoppingItemFromInput(); }
+    });
+    document.getElementById('shoppingClearBtn').addEventListener('click', function () {
+      callApi('clearCheckedShoppingItems', []).then(renderShoppingList).catch(function (err) { showToast(err.message); });
+    });
+
+    (function setupShoppingMic() {
+      var SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+      var micBtn = document.getElementById('shoppingMicBtn');
+      if (!SpeechRecognitionCtor) {
+        micBtn.hidden = true;
+        return;
+      }
+      var recognition = new SpeechRecognitionCtor();
+      recognition.lang = 'ko-KR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      var listening = false;
+
+      recognition.onresult = function (ev) {
+        var text = ev.results[0][0].transcript.trim();
+        if (!text) return;
+        callApi('addShoppingItem', [text])
+          .then(function (data) {
+            renderShoppingList(data);
+            showToast('"' + text + '" 추가했어요.');
+          })
+          .catch(function (err) { showToast(err.message); });
+      };
+      recognition.onerror = function (ev) {
+        showToast(ev.error === 'not-allowed' ? '마이크 권한을 허용해주세요.' : '음성 인식에 실패했습니다.');
+      };
+      recognition.onend = function () {
+        listening = false;
+        micBtn.classList.remove('listening');
+      };
+
+      micBtn.addEventListener('click', function () {
+        if (listening) { recognition.stop(); return; }
+        listening = true;
+        micBtn.classList.add('listening');
+        try { recognition.start(); } catch (e) { listening = false; micBtn.classList.remove('listening'); }
+      });
+    })();
+
     loadMonth(null);
     loadParkingStatus();
     loadWeather();
     loadStocks();
+    loadShoppingList();
   </script>
 </body>
 </html>

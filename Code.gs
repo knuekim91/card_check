@@ -9,6 +9,7 @@ var DEFAULT_CARDS = ['롯데카드(헬로티비)', '롯데카드(재홍)', '우�
 var CATEGORIES = ['식비', '생활용품', '교육', '의료/건강', '보험', '통신', '교통/주유', '문화/여가', '카드값/대출', '기타'];
 var PARKING_SHEET = 'Parking';
 var CAR_LIST = ['검둥이', '흰둥이'];
+var SHOPPING_SHEET = 'Shopping';
 
 // 대구 기준 좌표. 다른 지역이면 이 값을 바꿔주세요.
 var WEATHER_LAT = 35.8714;
@@ -145,7 +146,12 @@ var API_ACTIONS_ = {
   getWeatherInfo: getWeatherInfo,
   getStockInfo: getStockInfo,
   scanReceipt: scanReceipt,
-  addExpenseFromAlert: addExpenseFromAlert
+  addExpenseFromAlert: addExpenseFromAlert,
+  getShoppingList: getShoppingList,
+  addShoppingItem: addShoppingItem,
+  toggleShoppingItem: toggleShoppingItem,
+  deleteShoppingItem: deleteShoppingItem,
+  clearCheckedShoppingItems: clearCheckedShoppingItems
 };
 
 function doGet(e) {
@@ -765,4 +771,108 @@ function parseCardAlertText_(text) {
   if (!dateStr) throw new Error('문자에서 날짜/가맹점을 찾지 못했습니다: ' + text);
 
   return { amount: amount, dateStr: dateStr, item: item || '카드 승인' };
+}
+
+// 장보기 메모: 사러 가야 할 물품을 적어두고, 산 뒤 체크하면 목록에서 사라집니다.
+// 지금까지 적었던 모든 물품(체크 여부 상관없이)의 이름 빈도를 세어 "자주 쓰는 물품"
+// 칩을 만들어주므로, 자주 사는 품목일수록 탭 한 번으로 바로 추가할 수 있습니다.
+function ensureShoppingSheet_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = ss.getSheetByName(SHOPPING_SHEET);
+  if (!sheet) {
+    sheet = ss.insertSheet(SHOPPING_SHEET);
+    sheet.appendRow(['id', 'name', 'checked', 'createdAt']);
+  }
+  return sheet;
+}
+
+function getShoppingList() {
+  var sheet = ensureShoppingSheet_();
+  var rows = sheet.getDataRange().getValues();
+  var items = [];
+  var countByName = {};
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i];
+    if (!row[0]) continue;
+    var name = String(row[1] || '').trim();
+    if (!name) continue;
+    var checked = row[2] === true || row[2] === 'TRUE';
+    items.push({ id: row[0], name: name, checked: checked });
+    var key = name.toLowerCase();
+    countByName[key] = (countByName[key] || 0) + 1;
+  }
+
+  var uncheckedNames = {};
+  items.forEach(function (it) { if (!it.checked) uncheckedNames[it.name.toLowerCase()] = true; });
+
+  var frequent = Object.keys(countByName)
+    .filter(function (key) { return !uncheckedNames[key]; })
+    .sort(function (a, b) { return countByName[b] - countByName[a]; })
+    .slice(0, 12)
+    .map(function (key) {
+      for (var n = items.length - 1; n >= 0; n--) {
+        if (items[n].name.toLowerCase() === key) return items[n].name;
+      }
+      return key;
+    });
+
+  items.sort(function (a, b) {
+    if (a.checked !== b.checked) return a.checked ? 1 : -1;
+    return 0;
+  });
+
+  return { items: items, frequent: frequent };
+}
+
+function addShoppingItem(name) {
+  name = String(name || '').trim();
+  if (!name) throw new Error('물품 이름을 입력해주세요.');
+  if (name.length > 30) throw new Error('물품 이름은 30자 이내로 입력해주세요.');
+  var sheet = ensureShoppingSheet_();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i];
+    if (!row[0]) continue;
+    var checked = row[2] === true || row[2] === 'TRUE';
+    if (!checked && String(row[1] || '').trim().toLowerCase() === name.toLowerCase()) {
+      throw new Error('"' + name + '"은(는) 이미 목록에 있어요.');
+    }
+  }
+  var id = Utilities.getUuid();
+  sheet.appendRow([id, name, false, new Date()]);
+  return getShoppingList();
+}
+
+function toggleShoppingItem(id, checked) {
+  var sheet = ensureShoppingSheet_();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === id) {
+      sheet.getRange(i + 1, 3).setValue(!!checked);
+      return getShoppingList();
+    }
+  }
+  throw new Error('항목을 찾을 수 없습니다.');
+}
+
+function deleteShoppingItem(id) {
+  var sheet = ensureShoppingSheet_();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = 1; i < rows.length; i++) {
+    if (rows[i][0] === id) {
+      sheet.deleteRow(i + 1);
+      return getShoppingList();
+    }
+  }
+  throw new Error('항목을 찾을 수 없습니다.');
+}
+
+function clearCheckedShoppingItems() {
+  var sheet = ensureShoppingSheet_();
+  var rows = sheet.getDataRange().getValues();
+  for (var i = rows.length - 1; i >= 1; i--) {
+    var checked = rows[i][2] === true || rows[i][2] === 'TRUE';
+    if (checked) sheet.deleteRow(i + 1);
+  }
+  return getShoppingList();
 }
