@@ -263,6 +263,38 @@ function shiftBillingKey_(key, delta) {
   return y + '-' + (m < 10 ? '0' + m : m);
 }
 
+// getMonthData() 캐싱: 같은 정산월을 짧은 시간 안에 다시 요청하면 시트를 다시 읽지 않고
+// 캐시에서 바로 내려줘서 체감 속도를 높인다. 지출을 추가/수정/삭제하면 해당 정산월의
+// 캐시를 즉시 비우므로 본인이 입력한 내용은 항상 바로 반영된다(최대 TTL만큼만 유효).
+var MONTH_CACHE_TTL_SEC = 20;
+var MONTH_CACHE_PREFIX_ = 'monthData_';
+var MONTH_CACHE_VERSION_KEY_ = 'monthDataVersion';
+
+function getMonthCacheVersion_() {
+  var v = CacheService.getScriptCache().get(MONTH_CACHE_VERSION_KEY_);
+  return v ? parseInt(v, 10) : 0;
+}
+
+// 카드 추가/삭제처럼 모든 정산월에 걸쳐 영향을 주는 변경이 생기면 버전을 올려서
+// 특정 월 키를 몰라도 전체 캐시를 한 번에 무효화한다.
+function bumpMonthCacheVersion_() {
+  var v = getMonthCacheVersion_() + 1;
+  CacheService.getScriptCache().put(MONTH_CACHE_VERSION_KEY_, String(v), 21600);
+}
+
+function monthCacheKey_(billingKey) {
+  return MONTH_CACHE_PREFIX_ + getMonthCacheVersion_() + '_' + billingKey;
+}
+
+// billingKey 달의 지출이 바뀌면 그 달 자체뿐 아니라, "전월 합계"로 그 달을 참조하는
+// 다음 달의 캐시도 함께 비워야 한다(getMonthData_의 prevGrandTotal 참고).
+function invalidateMonthCache_(billingKey) {
+  CacheService.getScriptCache().removeAll([
+    monthCacheKey_(billingKey),
+    monthCacheKey_(shiftBillingKey_(billingKey, 1))
+  ]);
+}
+
 function shortYear_(y) {
   var r = y % 100;
   return (r < 10 ? '0' : '') + r;
@@ -298,6 +330,7 @@ function addCard(name) {
   }
   var id = Utilities.getUuid();
   s.cardsSheet.appendRow([id, name, new Date()]);
+  bumpMonthCacheVersion_();
   return { id: id, name: name };
 }
 
@@ -313,6 +346,7 @@ function deleteCard(id) {
   for (var j = 1; j < cardRows.length; j++) {
     if (cardRows[j][0] === id) {
       s.cardsSheet.deleteRow(j + 1);
+      bumpMonthCacheVersion_();
       return true;
     }
   }
@@ -320,8 +354,20 @@ function deleteCard(id) {
 }
 
 function getMonthData(billingKey) {
-  var s = ensureSheets_();
   if (!billingKey) billingKey = getBillingKey_(new Date());
+  var cache = CacheService.getScriptCache();
+  var key = monthCacheKey_(billingKey);
+  var cached = cache.get(key);
+  if (cached) {
+    try { return JSON.parse(cached); } catch (e) { /* 캐시가 손상됐으면 무시하고 다시 계산 */ }
+  }
+  var data = getMonthData_impl_(billingKey);
+  try { cache.put(key, JSON.stringify(data), MONTH_CACHE_TTL_SEC); } catch (e) { /* 캐시 저장 실패는 무시(용량 초과 등) */ }
+  return data;
+}
+
+function getMonthData_impl_(billingKey) {
+  var s = ensureSheets_();
   var range = getBillingRange_(billingKey);
   var prevKey = shiftBillingKey_(billingKey, -1);
   var prevRange = getBillingRange_(prevKey);
@@ -388,7 +434,9 @@ function addExpense(cardId, dateStr, item, amount, category) {
   var id = Utilities.getUuid();
   var dateObj = parseDate_(dateStr);
   s.expSheet.appendRow([id, cardId, dateObj, item, amount, category, new Date()]);
-  return getBillingKey_(dateObj);
+  var billingKey = getBillingKey_(dateObj);
+  invalidateMonthCache_(billingKey);
+  return billingKey;
 }
 
 function updateExpense(id, cardId, dateStr, item, amount, category) {
@@ -404,9 +452,13 @@ function updateExpense(id, cardId, dateStr, item, amount, category) {
   var rows = s.expSheet.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][0] === id) {
+      var oldDateObj = toDate_(rows[i][2]);
       var dateObj = parseDate_(dateStr);
       s.expSheet.getRange(i + 1, 2, 1, 5).setValues([[cardId, dateObj, item, amount, category]]);
-      return getBillingKey_(dateObj);
+      invalidateMonthCache_(getBillingKey_(oldDateObj));
+      var newBillingKey = getBillingKey_(dateObj);
+      invalidateMonthCache_(newBillingKey);
+      return newBillingKey;
     }
   }
   throw new Error('내역을 찾을 수 없습니다.');
@@ -417,7 +469,9 @@ function deleteExpense(id) {
   var rows = s.expSheet.getDataRange().getValues();
   for (var i = 1; i < rows.length; i++) {
     if (rows[i][0] === id) {
+      var dateObj = toDate_(rows[i][2]);
       s.expSheet.deleteRow(i + 1);
+      invalidateMonthCache_(getBillingKey_(dateObj));
       return true;
     }
   }
