@@ -754,6 +754,22 @@
     }
     details.parking-toggle[open] summary::after { transform: rotate(180deg); }
     details.parking-toggle[open] summary { margin-bottom: 12px; }
+    details.panel-toggle > summary.section-title {
+      cursor: pointer;
+      list-style: none;
+      margin: 0;
+    }
+    details.panel-toggle > summary.section-title::-webkit-details-marker { display: none; }
+    details.panel-toggle > summary.section-title::after {
+      content: '▾';
+      color: var(--text-sub);
+      font-size: 14px;
+      font-weight: 400;
+      margin-left: auto;
+      transition: transform 0.15s;
+    }
+    details.panel-toggle[open] > summary.section-title::after { transform: rotate(180deg); }
+    details.panel-toggle[open] > summary.section-title { margin-bottom: 12px; }
     #toast {
       position: fixed;
       bottom: 20px;
@@ -1167,38 +1183,23 @@
       <button type="button" class="theme-btn" data-theme="vibrant">비비드</button>
     </div>
     <section class="panel accent-parking">
-      <h3 class="section-title"><span class="title-icon">🚘</span> 우리집 차량 관리</h3>
-      <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
-      <div class="parking-status-grid">
-        <div class="parking-status small empty" id="parkingStatus-black">불러오는 중...</div>
-        <div class="parking-status small empty" id="parkingStatus-white">불러오는 중...</div>
-      </div>
-      <details class="parking-toggle" id="parkingDetails">
-        <summary>🚗 주차 위치 기록</summary>
-        <div class="parking-buttons">
-          <button type="button" class="parking-btn loc-2" data-loc="지하2층"><span class="pk-icon">🅿️</span><span class="pk-label">지하2층</span></button>
-          <button type="button" class="parking-btn loc-3" data-loc="지하3층"><span class="pk-icon">🅿️</span><span class="pk-label">지하3층</span></button>
-          <button type="button" class="parking-btn loc-4" data-loc="지하4층"><span class="pk-icon">🅿️</span><span class="pk-label">지하4층</span></button>
-          <button type="button" class="parking-btn loc-other" data-loc="다른곳"><span class="pk-icon">📍</span><span class="pk-label">다른곳</span></button>
+      <details class="panel-toggle">
+        <summary class="section-title"><span class="title-icon">🚘</span> 우리집 차량 관리</summary>
+        <div class="weather-card empty" id="weatherCard">불러오는 중...</div>
+        <div class="parking-status-grid">
+          <div class="parking-status small empty" id="parkingStatus-black">불러오는 중...</div>
+          <div class="parking-status small empty" id="parkingStatus-white">불러오는 중...</div>
         </div>
+        <details class="parking-toggle" id="parkingDetails">
+          <summary>🚗 주차 위치 기록</summary>
+          <div class="parking-buttons">
+            <button type="button" class="parking-btn loc-2" data-loc="지하2층"><span class="pk-icon">🅿️</span><span class="pk-label">지하2층</span></button>
+            <button type="button" class="parking-btn loc-3" data-loc="지하3층"><span class="pk-icon">🅿️</span><span class="pk-label">지하3층</span></button>
+            <button type="button" class="parking-btn loc-4" data-loc="지하4층"><span class="pk-icon">🅿️</span><span class="pk-label">지하4층</span></button>
+            <button type="button" class="parking-btn loc-other" data-loc="다른곳"><span class="pk-icon">📍</span><span class="pk-label">다른곳</span></button>
+          </div>
+        </details>
       </details>
-    </section>
-
-    <section class="panel accent-shopping">
-      <h3 class="section-title"><span class="title-icon">🛒</span> 장보기 메모</h3>
-      <div class="shopping-input-row">
-        <input type="text" id="shoppingInput" placeholder="살 물건 입력 (예: 우유)" maxlength="30">
-        <button type="button" class="freq-toggle-btn" id="shoppingFreqToggleBtn" aria-label="자주 쓰는 물품 보기" title="자주 쓰는 물품">⭐</button>
-        <button type="button" class="mic-btn" id="shoppingMicBtn" aria-label="음성으로 입력" title="음성으로 입력">🎤</button>
-        <button type="button" class="shopping-add-btn" id="shoppingAddBtn" aria-label="추가">+</button>
-      </div>
-      <div class="shopping-frequent" id="shoppingFrequent" hidden></div>
-      <div class="shopping-list" id="shoppingListWrap">
-        <div class="empty-state">불러오는 중...</div>
-      </div>
-      <div class="shopping-footer-actions" id="shoppingFooterActions" hidden>
-        <button type="button" class="shopping-clear-btn" id="shoppingClearBtn">완료 항목 지우기</button>
-      </div>
     </section>
 
     <div class="summary-group">
@@ -1282,6 +1283,25 @@
       <div id="expenseListWrap">
         <div class="empty-state">불러오는 중...</div>
       </div>
+    </section>
+
+    <section class="panel accent-shopping">
+      <details class="panel-toggle">
+        <summary class="section-title"><span class="title-icon">🛒</span> 장보기 메모</summary>
+        <div class="shopping-input-row">
+          <input type="text" id="shoppingInput" placeholder="살 물건 입력 (예: 우유)" maxlength="30">
+          <button type="button" class="freq-toggle-btn" id="shoppingFreqToggleBtn" aria-label="자주 쓰는 물품 보기" title="자주 쓰는 물품">⭐</button>
+          <button type="button" class="mic-btn" id="shoppingMicBtn" aria-label="음성으로 입력" title="음성으로 입력">🎤</button>
+          <button type="button" class="shopping-add-btn" id="shoppingAddBtn" aria-label="추가">+</button>
+        </div>
+        <div class="shopping-frequent" id="shoppingFrequent" hidden></div>
+        <div class="shopping-list" id="shoppingListWrap">
+          <div class="empty-state">불러오는 중...</div>
+        </div>
+        <div class="shopping-footer-actions" id="shoppingFooterActions" hidden>
+          <button type="button" class="shopping-clear-btn" id="shoppingClearBtn">완료 항목 지우기</button>
+        </div>
+      </details>
     </section>
 
     <section class="panel accent-stock">
